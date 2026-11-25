@@ -70,11 +70,12 @@ if (!cur) { cur = newList(); lists[cur.id] = cur; }
 
 let saveTimer;
 function save(now = false) {
-  $("#saveState").textContent = "저장 중…";
+  if (room) pushRoom();
+  $("#saveState").textContent = room ? "✓ 모둠과 공유 중" : "저장 중…";
   clearTimeout(saveTimer);
   const run = () => {
     cur.updated = Date.now(); lists[cur.id] = cur;
-    try { lsSet(LS_LISTS, lists); lsSet(LS_CUR, cur.id); $("#saveState").textContent = "✓ 자동 저장됨"; }
+    try { lsSet(LS_LISTS, lists); lsSet(LS_CUR, cur.id); $("#saveState").textContent = room ? "✓ 모둠과 공유 중" : "✓ 자동 저장됨"; }
     catch (e) {
       $("#saveState").textContent = "⚠ 저장 실패";
       toast("저장 공간이 꽉 찼어요. 내 기록에서 안 쓰는 티어표를 지워 주세요.", 4500);
@@ -123,6 +124,7 @@ function itemEl(id) {
 
 function render() {
   $("#listTitle").value = cur.title || "";
+  $("#listTitle").readOnly = !!room;
   tierTable.innerHTML = "";
   cur.tiers.forEach(t => {
     const row = document.createElement("div"); row.className = "tier-row"; row.dataset.tier = t.id;
@@ -276,8 +278,16 @@ function onCancel(e) { if (drag && e.pointerId === drag.pid) { const d = cleanup
 function onUp(e) {
   if (!drag || e.pointerId !== drag.pid) return;
   const d = cleanupDrag();
-  if (d.started) syncFromDOM();
+  if (d.started) {
+    if (room) {      // 모둠: 내가 옮긴 그 항목 하나만 최신 상태 위에 반영
+      const zEl = d.el.parentNode, id = d.el.dataset.id;
+      const z = zEl === poolEl ? "pool" : zEl?.dataset?.zone, idx = zEl ? $$(".item", zEl).indexOf(d.el) : -1;
+      if (pendingRemote) applyRemote();
+      if (z && cur.items[id]) { moveItem(id, z, idx); render(); save(); }
+    } else syncFromDOM();
+  }
   else selected === d.el.dataset.id ? deselect() : select(d.el.dataset.id);
+  if (pendingRemote) applyRemote();
 }
 
 /* ===================== 항목 선택 메뉴 ===================== */
@@ -304,10 +314,11 @@ function deselect() {
   if (selected) { const el = $(`.item[data-id="${selected}"]`); el && el.classList.remove("selected"); }
   selected = null; menu.classList.remove("show"); document.body.classList.remove("picking");
 }
-function moveItem(id, zoneId) {
+function moveItem(id, zoneId, idx = -1) {
   cur.tiers.forEach(t => t.items = t.items.filter(x => x !== id));
   cur.pool = cur.pool.filter(x => x !== id);
-  if (zoneId === "pool") cur.pool.push(id); else cur.tiers.find(t => t.id === zoneId)?.items.push(id);
+  const arr = zoneId === "pool" ? cur.pool : (cur.tiers.find(t => t.id === zoneId) || {}).items || cur.pool;
+  idx < 0 || idx > arr.length ? arr.push(id) : arr.splice(idx, 0, id);
 }
 $("#imTiers").addEventListener("click", e => {
   const b = e.target.closest("button[data-t]"); if (!b || !selected) return;
@@ -473,7 +484,12 @@ $("#btnResetPlace").onclick = () => {
 $("#listTitle").addEventListener("input", e => { cur.title = e.target.value; save(); });
 
 /* ===================== 새 티어표 · 기록 ===================== */
-function switchTo(list) { deselect(); cur = list; lists[cur.id] = cur; render(); save(true); }
+function switchTo(list) {
+  deselect();
+  if (room && !(list.room && list.room.code === room.code && list.room.g === room.g)) leaveRoom();
+  cur = list; lists[cur.id] = cur; render(); save(true);
+  if (list.room && !room) joinRoom(list.room.code, list.room.g, list.room.name).catch(e => toast(e.message, 3500));
+}
 $("#btnNew").onclick = () => {
   if (!Object.keys(cur.items).length && !cur.title) { $("#listTitle").focus(); toast("지금 티어표가 비어 있어요. 여기에 바로 만들면 돼요"); return; }
   switchTo(newList()); toast("새 티어표! 앞의 것은 내 기록에 있어요", 2600); $("#listTitle").focus();
@@ -719,7 +735,14 @@ function wireCodeField(input, err, btn, onDone) {
     const code = normalizeCode(input.value);
     if (!/^TM/.test(code)) input.value = code;
     const old = btn.textContent; btn.disabled = true; btn.textContent = "불러오는 중…"; err.textContent = "";
-    try { const { tpl, label } = await fetchTemplate(code); onDone(); startFromTemplate(tpl, label); }
+    try {
+      // 모둠 활동 코드인지 먼저 확인
+      if (CODE_RE.test(code) && window.TMRoom && TMRoom.available()) {
+        const meta = await TMRoom.getSession(code).catch(() => null);
+        if (meta) { onDone(); openGroupPicker(code, meta); return; }
+      }
+      const { tpl, label } = await fetchTemplate(code); onDone(); startFromTemplate(tpl, label);
+    }
     catch (e) { err.textContent = e.message === "Failed to fetch" ? "인터넷 연결을 확인해 주세요." : e.message; }
     finally { btn.disabled = false; btn.textContent = old; }
   });
@@ -735,6 +758,7 @@ $("#btnTeacher").onclick = async () => {
   $("#teacherKey").value = sessionStorage.getItem(SS_KEY) || "";
   $("#serverUrlInput").value = serverUrl();
   $("#codeResult").innerHTML = ""; $("#myCodes").innerHTML = "";
+  $("#roomResult").innerHTML = ""; refreshRoomSection();
   openModal("mTeacher"); checkServer();
 };
 async function checkServer() {
@@ -801,13 +825,170 @@ async function copy(text, msg = "복사했어요") {
   catch { const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); toast(msg); }
 }
 
+/* ===================== 모둠 실시간 공유 ===================== */
+let room = null, pendingRemote = false;
+const LS_NAME = "tm.v1.myname", LS_MYROOMS = "tm.v1.myrooms";
+
+async function joinRoom(code, g, name, meta) {
+  g = String(g);
+  if (room && room.code === code && room.g === g) {
+    if (name && room.name !== name) { room.name = name; cur.room.name = name; room.h && room.h.rename(name); persistLists(); }
+    return;
+  }
+  leaveRoom();
+  meta = meta || await TMRoom.getSession(code);
+  if (!meta) throw new Error("이 모둠 활동은 끝났거나 없는 코드예요.");
+  let l = Object.values(lists).find(x => x.room && x.room.code === code && String(x.room.g) === g);
+  if (!l) { l = newList(meta.title); l.fromCode = code; lists[l.id] = l; }
+  l.room = { code, g, name };
+  deselect(); cur = l;
+  room = { code, g, name, meta, remote: null };
+  const mine = room;
+  const h = await TMRoom.join(code, g, name, grp => { if (room === mine) onRemote(grp); });
+  if (room !== mine) { h.leave(); return; }
+  room.h = h;
+  renderRoomBar(); render();
+}
+function leaveRoom() { if (room && room.h) room.h.leave(); room = null; pendingRemote = false; renderRoomBar(); render(); }
+
+function zoneMap(st) {
+  const m = {}; st.tiers.forEach(t => t.items.forEach((id, i) => m[id] = { z: t.id, o: i, label: t.label })); st.pool.forEach((id, i) => m[id] = { z: "pool", o: i, label: "상자" });
+  return m;
+}
+function onRemote(grp) {
+  if (!room) return;
+  const st = TMBuild(room.meta, grp), prev = room.remote;
+  room.remote = st;
+  if (prev) {   // 친구가 옮긴 것 알려 주기
+    const a = zoneMap(prev), b = zoneMap(st), msgs = [];
+    for (const id in b) {
+      const p = (grp.pos || {})[id];
+      if (p && p.u !== TMRoom.uid && a[id] && a[id].z !== b[id].z) msgs.push(`${p.by || "친구"}: '${itemName(st.items[id])}' → ${b[id].label || "?"}`);
+    }
+    for (const id in a) if (!b[id]) { const p = (grp.pos || {})[id]; if (p && p.u !== TMRoom.uid) msgs.push(`${p.by || "친구"}: '${itemName(prev.items[id])}' 지움`); }
+    if (msgs.length) toast(msgs.length > 2 ? `${msgs[0]} 외 ${msgs.length - 1}개` : msgs.join(" · "), 2600);
+    room.flash = Object.keys(b).filter(id => a[id] && a[id].z !== b[id].z && (grp.pos || {})[id]?.u !== TMRoom.uid);
+  }
+  if (drag && drag.started) { pendingRemote = true; return; }
+  applyRemote();
+}
+function applyRemote() {
+  if (!room || !room.remote) return;
+  pendingRemote = false;
+  const st = room.remote;
+  cur.title = `${st.title} · ${room.g}모둠`;
+  cur.tiers = clone(st.tiers); cur.pool = [...st.pool]; cur.items = clone(st.items);
+  const sel = selected;
+  render(); renderRoomBar();
+  (room.flash || []).forEach(id => $(`.item[data-id="${id}"]`)?.classList.add("remote-moved")); room.flash = [];
+  if (sel && cur.items[sel] && !$("#mEdit").classList.contains("show")) select(sel);
+  cur.updated = Date.now(); lists[cur.id] = cur; try { lsSet(LS_LISTS, lists); lsSet(LS_CUR, cur.id); } catch {}
+}
+function pushRoom() {
+  if (!room || !room.remote || !room.h) return;
+  const r = room.remote, up = {}, me = { by: room.name, u: TMRoom.uid, t: Date.now() };
+  const rz = zoneMap(r);
+  [...cur.tiers.map(t => [t.id, t.items]), ["pool", cur.pool]].forEach(([z, ids]) => ids.forEach((id, i) => {
+    const p = rz[id]; if (!p || p.z !== z || p.o !== i) up[`pos/${id}`] = { z, o: i, ...me };
+  }));
+  for (const id in r.items) if (!cur.items[id]) up[`pos/${id}`] = { z: "x", ...me };
+  for (const id in cur.items) {
+    const a = JSON.stringify(cur.items[id]), b = JSON.stringify(r.items[id] || null);
+    if (a !== b) up[`items/${id}`] = JSON.parse(a);
+  }
+  const tn = {}, tr = {};
+  cur.tiers.forEach((t, i) => tn[t.id] = { label: t.label, color: t.color, o: i });
+  r.tiers.forEach((t, i) => tr[t.id] = { label: t.label, color: t.color, o: i });
+  if (JSON.stringify(tn) !== JSON.stringify(tr)) up.tiers = tn;
+  if (!Object.keys(up).length) return;
+  // 화면에 바로 반영되도록 기준 상태도 갱신
+  room.remote = { ...r, tiers: clone(cur.tiers), pool: [...cur.pool], items: clone(cur.items) };
+  room.h.update(up).catch(() => toast("모둠과 공유하지 못했어요. 인터넷 연결을 확인해 주세요.", 3500));
+}
+function renderRoomBar() {
+  const bar = $("#roomBar");
+  if (!room) { bar.hidden = true; return; }
+  bar.hidden = false;
+  const all = (room.remote && room.remote.members) || {};
+  const mem = [...new Set(Object.entries(all).filter(([id, m]) => id !== TMRoom.uid && m && m.name && m.name !== room.name).map(([, m]) => m.name))];
+  if (room.remote) mem.unshift(`${room.name}(나)`);
+  $("#roomInfo").innerHTML = `<b>${esc(room.g)}모둠</b> 실시간 · ${mem.length ? "함께: " + mem.map(esc).join(", ") : "연결 중…"}`;
+}
+$("#roomLeave").onclick = () => {
+  if (!confirm("모둠 활동에서 나갈까요?\n지금까지 한 것은 내 기록에 남아요.")) return;
+  const l = cur; leaveRoom(); delete l.room; persistLists(); toast("모둠 활동에서 나왔어요");
+};
+
+/* 모둠 고르기 */
+let pickCtx = null;
+async function openGroupPicker(code, meta) {
+  pickCtx = { code, meta, g: null };
+  $("#pickTitle").textContent = meta.title || "모둠 활동";
+  $("#pickName").value = lsGet(LS_NAME, "") || "";
+  $("#pickErr").textContent = "";
+  const box = $("#pickGroups");
+  box.innerHTML = Array.from({ length: meta.groups || 4 }, (_, i) => `<button class="grp-btn" data-g="${i + 1}"><b>${i + 1}</b><span>모둠</span><small data-cnt="${i + 1}"></small></button>`).join("");
+  openModal("mGroup");
+  setTimeout(() => { if (!$("#pickName").value) $("#pickName").focus(); }, 60);
+  TMRoom.groupCounts(code).then(c => { for (const k in c) { const el = $(`[data-cnt="${k}"]`); if (el && c[k]) el.textContent = `${c[k]}명`; } }).catch(() => {});
+}
+$("#pickGroups").addEventListener("click", e => {
+  const b = e.target.closest(".grp-btn"); if (!b) return;
+  $$(".grp-btn").forEach(x => x.classList.toggle("on", x === b)); pickCtx.g = b.dataset.g;
+});
+$("#pickGo").onclick = async () => {
+  const name = $("#pickName").value.trim();
+  if (!name) { $("#pickErr").textContent = "이름(또는 별명)을 적어 주세요."; $("#pickName").focus(); return; }
+  if (!pickCtx.g) { $("#pickErr").textContent = "우리 모둠 번호를 눌러 주세요."; return; }
+  try { lsSet(LS_NAME, name); } catch {}
+  const btn = $("#pickGo"); btn.disabled = true;
+  try { await joinRoom(pickCtx.code, pickCtx.g, name, pickCtx.meta); closeModal("mGroup"); toast(`${pickCtx.g}모둠 입장! 친구들과 함께 옮겨 보세요.`, 3000); }
+  catch (e) { $("#pickErr").textContent = e.message; }
+  finally { btn.disabled = false; }
+};
+$("#pickName").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) $("#pickGo").click(); });
+
+/* 교사: 모둠 활동 열기 */
+function refreshRoomSection() {
+  const ok = window.TMRoom && TMRoom.available();
+  $("#roomSec").classList.toggle("disabled", !ok);
+  $("#roomNeedSetup").hidden = ok;
+  $("#btnMakeRoom").disabled = !ok;
+  renderMyRooms();
+}
+function renderMyRooms() {
+  const rows = lsGet(LS_MYROOMS, []);
+  $("#myRooms").innerHTML = rows.length ? `<table class="code-table"><tr><th>코드</th><th>제목</th><th>모둠</th><th></th></tr>${rows.slice(0, 8).map(r =>
+    `<tr><td><code>${esc(r.code)}</code></td><td>${esc(r.title)}</td><td>${r.groups}</td><td><a class="btn small" href="dashboard.html?code=${esc(r.code)}" target="_blank" rel="noopener">모아 보기</a></td></tr>`).join("")}</table>` : "";
+}
+$("#btnMakeRoom").onclick = async () => {
+  if (!Object.keys(cur.items).length) { toast("항목이 하나도 없어요. 먼저 항목을 넣거나 수업 세트를 불러오세요."); return; }
+  const btn = $("#btnMakeRoom"); btn.disabled = true; btn.textContent = "여는 중…";
+  try {
+    const tpl = JSON.parse(JSON.stringify(makeTemplate($("#tplToPool").checked)));
+    const groups = +$("#grpCount").value;
+    const code = await TMRoom.createSession({ title: tpl.title, groups, tpl });
+    const rows = lsGet(LS_MYROOMS, []); rows.unshift({ code, title: tpl.title, groups, created: Date.now() }); lsSet(LS_MYROOMS, rows.slice(0, 30));
+    const dash = location.origin + location.pathname.replace(/[^/]*$/, "") + "dashboard.html?code=" + code;
+    $("#roomResult").innerHTML = `<div class="code-big">${code}</div>
+      <p class="note" style="text-align:center">학생: <b>코드 입력</b>에 ${code} → 모둠 번호와 이름 고르기</p>
+      <div class="row" style="justify-content:center"><a class="btn primary" href="${dash}" target="_blank" rel="noopener">모둠 모아 보기 열기</a><button class="btn small" id="cpRoom">코드 복사</button></div>`;
+    $("#cpRoom").onclick = () => copy(code);
+    $("#roomResult").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    renderMyRooms();
+  } catch (e) { toast(e.message, 3500); }
+  finally { btn.disabled = false; btn.textContent = "모둠 활동 열기"; }
+};
+
 /* ===================== 도움말 · 시작 ===================== */
 $("#btnHelp").onclick = () => openModal("mHelp");
 window.addEventListener("resize", deselect);
 
 render(); save(true);
 
-const qp = new URLSearchParams(location.search).get("code");
+const QS = new URLSearchParams(location.search);
+if (cur.room && !QS.get("code")) joinRoom(cur.room.code, cur.room.g, cur.room.name).catch(e => toast(e.message, 3500));
+const qp = QS.get("code");
 if (qp) {                                   // 교사 링크로 들어오면 바로 불러오기
   history.replaceState(null, "", location.pathname);
   fetchTemplate(normalizeCode(qp)).then(({ tpl, label }) => startFromTemplate(tpl, label))

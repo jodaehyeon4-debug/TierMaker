@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>모둠 모아 보기 · 우리반 티어메이커</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  body{display:block;height:auto;overflow:auto}
+  .dash{padding:16px 18px 40px;max-width:1800px;margin:0 auto}
+  .dash-head{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:16px}
+  .dash-head h1{margin:0;font-size:26px;letter-spacing:-.4px;flex:1;min-width:280px}
+  .dash-head h1 small{display:block;font-size:14px;color:var(--muted);font-weight:600;margin-bottom:4px}
+  .join-box{background:#24241d;border:1px solid #45453b;border-radius:14px;padding:10px 16px;display:flex;align-items:center;gap:14px}
+  .join-box .code{font-family:ui-monospace,Consolas,monospace;font-size:40px;font-weight:800;letter-spacing:8px;color:var(--accent)}
+  .join-box .how{font-size:13.5px;color:var(--muted);line-height:1.5}
+  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:14px}
+  .gcard{background:var(--panel);border:1px solid #33332b;border-radius:14px;padding:10px;cursor:zoom-in;transition:border-color .15s}
+  .gcard:hover{border-color:#55554a}
+  .gcard h3{margin:2px 4px 8px;font-size:17px;display:flex;align-items:baseline;gap:8px}
+  .gcard h3 span{font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gcard .live{color:#7fd18e}
+  .mini{--tile:40px;--label-w:52px;--gap:2px}
+  .mini .tier-label{font-size:15px}
+  .mini .tier-label.long{font-size:11px}
+  .mini .item .txt{font-size:10px!important}
+  .mini .item{cursor:default;border-radius:3px}
+  .left{font-size:12.5px;color:var(--muted);margin:6px 4px 0}
+  .gcard.empty .mini{opacity:.45}
+  /* 크게 보기 */
+  .gcard.focus{position:fixed;inset:12px;z-index:300;overflow:auto;cursor:zoom-out;background:#1d1d18}
+  .gcard.focus .mini{--tile:84px;--label-w:110px;--gap:3px}
+  .gcard.focus .tier-label{font-size:26px}
+  .gcard.focus .item .txt{font-size:14px!important}
+  .gcard.focus h3{font-size:24px}
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:299;display:none}
+  .backdrop.show{display:block}
+  .summary{margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .sbox{background:var(--panel);border:1px solid #33332b;border-radius:14px;padding:14px}
+  .sbox h2{margin:0 0 4px;font-size:18px}
+  .sbox p{margin:0 0 10px;font-size:13px;color:var(--muted)}
+  .rank{display:grid;grid-template-columns:28px 44px 1fr 110px;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid #2c2c25;font-size:14.5px}
+  .rank .n{font-weight:800;color:var(--muted);text-align:right}
+  .rank .th{width:40px;height:40px;border-radius:4px;overflow:hidden;background:#555;position:relative}
+  .rank .th img{width:100%;height:100%;object-fit:cover}
+  .rank .th .txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#171714;text-align:center;line-height:1.1;padding:2px}
+  .bar{height:10px;border-radius:5px;background:#2c2c25;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent)}
+  .dist{display:flex;gap:2px;flex-wrap:wrap}
+  .dist i{font-style:normal;font-size:11.5px;font-weight:800;color:#171714;border-radius:4px;padding:1px 5px}
+  .msg{padding:60px 20px;text-align:center;color:var(--muted);font-size:16px}
+  .tools{display:flex;gap:8px}
+  @media (max-width:900px){.summary{grid-template-columns:1fr}.groups{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>모둠 <b>모아 보기</b></div>
+  <div class="spacer"></div>
+  <div class="tools">
+    <a class="btn" href="./" target="_blank" rel="noopener">티어메이커 열기</a>
+    <button class="btn danger ghost" id="btnClose" hidden>활동 끝내기</button>
+  </div>
+</header>
+<main class="dash" id="dash"><div class="msg">불러오는 중…</div></main>
+<div class="backdrop" id="backdrop"></div>
+<div id="toast" role="status"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+<script src="config.js"></script>
+<script src="room.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "sessions": {
+      "$code": {
+        ".read": "auth != null",
+        "meta": {
+          ".write": "auth != null && (!data.exists() || data.child('owner').val() === auth.uid)",
+          ".validate": "newData.child('owner').val() === auth.uid && newData.child('title').isString() && newData.child('groups').isNumber() && newData.child('groups').val() <= 12"
+        },
+        "groups": {
+          ".write": "auth != null && root.child('sessions').child($code).child('meta').child('owner').val() === auth.uid",
+          "$g": {
+            ".write": "auth != null && root.child('sessions').child($code).child('meta').exists()"
+          }
+        },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}

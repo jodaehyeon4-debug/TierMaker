@@ -71,6 +71,10 @@
       </label>
       <span class="save-state" id="saveState"></span>
     </div>
+    <div class="room-bar" id="roomBar" hidden>
+      <span class="live-dot" aria-hidden="true"></span><span id="roomInfo"></span>
+      <button class="btn small ghost" id="roomLeave">나가기</button>
+    </div>
     <div class="board-scroll" id="boardScroll">
       <div class="tier-table" id="tierTable"></div>
       <button class="btn add-row" id="btnAddRow"><svg class="ic"><use href="#i-plus"/></svg>줄 추가</button>
@@ -209,6 +213,19 @@
   </div>
   <div id="codeResult"></div>
   <div id="myCodes"></div>
+  <section class="teach-sec" id="roomSec">
+    <h4>모둠 활동 (실시간 공유)</h4>
+    <p class="note">지금 티어표로 모둠 활동을 열어요. 학생은 코드를 넣고 모둠 번호와 이름을 고르면, 같은 모둠끼리 한 판을 함께 옮겨요. 로그인은 필요 없어요.</p>
+    <p class="note warn" id="roomNeedSetup" hidden>Firebase 설정이 아직 없어요. 'Firebase 설정 안내서'대로 한 번만 설정하면 쓸 수 있어요.</p>
+    <div class="row">
+      <label class="inline">모둠 수
+        <select id="grpCount"><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option></select>
+      </label>
+      <button class="btn accent-outline" id="btnMakeRoom">모둠 활동 열기</button>
+    </div>
+    <div id="roomResult"></div>
+    <div id="myRooms"></div>
+  </section>
   <details class="adv">
     <summary>서버 없이 쓰기(긴 코드) · 서버 주소</summary>
     <p class="note">서버가 아직 없을 때 긴 코드를 복사해 학생에게 주면 <b>코드 입력</b>에 그대로 붙여 넣을 수 있어요. 사진 항목이 있으면 매우 길어집니다.</p>
@@ -240,6 +257,18 @@
   <ol class="mini-steps"><li>항목 이름 쓰기</li><li>줄로 끌어 놓기</li><li>저장하기</li></ol>
 </div></div>
 
+<!-- 모둠 고르기 -->
+<div class="modal-back" id="mGroup"><div class="modal">
+  <h3>모둠 활동 들어가기</h3>
+  <p class="note" id="pickTitle"></p>
+  <label class="lbl" for="pickName">내 이름 (또는 별명)</label>
+  <input type="text" id="pickName" maxlength="12" placeholder="예: 김민수" autocomplete="off">
+  <label class="lbl">우리 모둠 번호</label>
+  <div class="grp-grid" id="pickGroups"></div>
+  <p class="field-err" id="pickErr" role="alert"></p>
+  <div class="actions"><button class="btn" data-close>취소</button><button class="btn primary" id="pickGo">들어가기</button></div>
+</div></div>
+
 <!-- 이어서 하기 -->
 <div class="modal-back" id="mResume"><div class="modal narrow">
   <h3>전에 하던 티어표가 있어요</h3>
@@ -252,6 +281,7 @@
 <script src="config.js"></script>
 <script src="vendor/html2canvas.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
+<script src="room.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -1,0 +1,86 @@
+/* 교사용 모둠 모아 보기 — 실시간 */
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dash = $("#dash");
+const code = (new URLSearchParams(location.search).get("code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+let focusG = null;
+
+function toast(m) { const t = $("#toast"); $("#toastMsg").textContent = m; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2500); }
+function nameOf(it) { return it ? (it.title || (it.type === "img" ? (it.cap || "사진") : it.text + (it.cap ? " " + it.cap : ""))) : ""; }
+function tile(it, cls = "item") {
+  if (!it) return "";
+  if (it.type === "img") return `<div class="${cls}" title="${esc(nameOf(it))}"><img src="${esc(it.src)}" alt=""></div>`;
+  return `<div class="${cls}" title="${esc(nameOf(it))}" style="background:${esc(it.bg || "#fff")}"><div class="txt">${esc(it.text)}</div></div>`;
+}
+
+if (!code) { dash.innerHTML = `<div class="msg">주소 끝에 <b>?code=모둠활동코드</b> 가 필요해요.<br>티어메이커 → 교사용 → 모둠 활동 열기에서 '모둠 모아 보기 열기'를 눌러 들어오세요.</div>`; return; }
+if (!TMRoom.available()) { dash.innerHTML = `<div class="msg">Firebase 설정이 아직 없어요. config.js를 확인해 주세요.</div>`; return; }
+
+TMRoom.watch(code, data => {
+  if (!data || !data.meta) { dash.innerHTML = `<div class="msg">코드 <b>${esc(code)}</b> 모둠 활동이 없거나 끝났어요.</div>`; return; }
+  draw(data);
+  if (data.meta.owner === TMRoom.uid) $("#btnClose").hidden = false;
+}).catch(e => { dash.innerHTML = `<div class="msg">${esc(e.message)}</div>`; });
+
+function draw(data) {
+  const meta = data.meta, n = meta.groups || 4, groups = data.groups || {};
+  const boards = [];
+  for (let g = 1; g <= n; g++) boards.push({ g, st: TMBuild(meta, groups[g] || {}), raw: groups[g] || {} });
+  const totalItems = Object.keys(boards[0]?.st.items || {}).length;
+
+  let html = `<div class="dash-head"><h1><small>모둠 활동 · ${n}모둠</small>${esc(meta.title)}</h1>
+    <div class="join-box"><div class="how">학생: <b>코드 입력</b>에<br>이 코드 → 모둠 번호·이름</div><div class="code">${esc(code)}</div></div></div>
+    <div class="groups">`;
+  for (const b of boards) {
+    const mem = [...new Set(Object.values(b.st.members).map(m => m && m.name).filter(Boolean))];
+    const placed = b.st.tiers.reduce((s, t) => s + t.items.length, 0);
+    html += `<div class="gcard${mem.length || placed ? "" : " empty"}${focusG === b.g ? " focus" : ""}" data-g="${b.g}">
+      <h3>${b.g}모둠 <span class="${mem.length ? "live" : ""}">${mem.length ? "● " + mem.map(esc).join(", ") : "아직 아무도 없어요"}</span></h3>
+      <div class="tier-table mini">${b.st.tiers.map(t => `<div class="tier-row"><div class="tier-label${[...t.label].length > 3 ? " long" : ""}" style="background:${esc(t.color)}">${esc(t.label)}</div>
+        <div class="tier-items">${t.items.map(id => tile(b.st.items[id])).join("")}</div></div>`).join("")}</div>
+      <div class="left">배치 ${placed} / ${totalItems} · 남은 항목 ${b.st.pool.length}개</div></div>`;
+  }
+  html += `</div>` + summary(boards);
+  dash.innerHTML = html;
+  $("#backdrop").classList.toggle("show", focusG != null);
+}
+
+// 반 전체: S=가장 높은 점수. 줄 수가 모둠마다 달라도 0~1 사이 점수로 맞춤
+function summary(boards) {
+  const agg = {};
+  for (const b of boards) {
+    const k = b.st.tiers.length; if (!k) continue;
+    b.st.tiers.forEach((t, i) => t.items.forEach(id => {
+      const a = agg[id] || (agg[id] = { id, it: b.st.items[id], scores: [], labels: [] });
+      a.scores.push(k === 1 ? 1 : 1 - i / (k - 1)); a.labels.push({ l: t.label, c: t.color });
+    }));
+  }
+  const arr = Object.values(agg).filter(a => a.scores.length);
+  if (!arr.length) return `<div class="summary"><div class="sbox"><h2>반 전체 순위</h2><p>모둠이 항목을 줄에 놓으면 여기에 모여요.</p></div></div>`;
+  arr.forEach(a => { const m = a.scores.reduce((s, x) => s + x, 0) / a.scores.length; a.avg = m; a.sd = Math.sqrt(a.scores.reduce((s, x) => s + (x - m) ** 2, 0) / a.scores.length); });
+  const top = [...arr].sort((a, b) => b.avg - a.avg || b.scores.length - a.scores.length).slice(0, 10);
+  const split = arr.filter(a => a.scores.length >= 2).sort((a, b) => b.sd - a.sd).slice(0, 6);
+  const row = (a, i, extra) => `<div class="rank"><span class="n">${i + 1}</span>${tile(a.it, "th")}<span>${esc(nameOf(a.it))} <small style="color:var(--muted)">(${a.scores.length}모둠)</small></span>${extra}</div>`;
+  return `<div class="summary">
+    <div class="sbox"><h2>반 전체 순위 TOP 10</h2><p>모둠들이 높은 줄에 놓을수록 위로 올라가요.</p>
+      ${top.map((a, i) => row(a, i, `<div class="bar"><i style="width:${Math.round(a.avg * 100)}%"></i></div>`)).join("")}</div>
+    <div class="sbox"><h2>의견이 갈린 항목</h2><p>모둠마다 다른 줄에 놓은 항목이에요. 토론거리로 좋아요.</p>
+      ${split.length ? split.map((a, i) => row(a, i, `<div class="dist">${a.labels.map(x => `<i style="background:${esc(x.c)}">${esc(x.l)}</i>`).join("")}</div>`)).join("") : `<p>아직 두 모둠 이상이 놓은 항목이 없어요.</p>`}</div>
+  </div>`;
+}
+
+dash.addEventListener("click", e => {
+  const c = e.target.closest(".gcard"); if (!c) return;
+  const g = +c.dataset.g; focusG = focusG === g ? null : g;
+  document.querySelectorAll(".gcard").forEach(x => x.classList.toggle("focus", +x.dataset.g === focusG));
+  $("#backdrop").classList.toggle("show", focusG != null);
+});
+$("#backdrop").onclick = () => { focusG = null; document.querySelectorAll(".gcard.focus").forEach(x => x.classList.remove("focus")); $("#backdrop").classList.remove("show"); };
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("#backdrop").onclick(); });
+$("#btnClose").onclick = async () => {
+  if (!confirm(`코드 ${code} 모둠 활동을 끝낼까요?\n모둠 판이 서버에서 지워져요. 학생 기기에는 마지막 모습이 남아요.`)) return;
+  try { await TMRoom.closeSession(code); toast("활동을 끝냈어요"); } catch (e) { toast(e.message); }
+};
+})();
