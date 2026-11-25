@@ -102,7 +102,7 @@ function textSize(t) {
   return n <= 2 ? .3 : n <= 4 ? .24 : n <= 6 ? .19 : n <= 10 ? .16 : n <= 16 ? .145 : .13;
 }
 function isEmojiOnly(t) { return /^\p{Extended_Pictographic}(️|‍\p{Extended_Pictographic}|\p{Emoji_Modifier})*$/u.test((t || "").trim()); }
-function itemName(it) { return it ? (it.type === "img" ? (it.cap || "사진") : (it.cap ? `${it.text} ${it.cap}` : it.text)) : ""; }
+function itemName(it) { return it ? (it.title || (it.type === "img" ? (it.cap || "사진") : (it.cap ? `${it.text} ${it.cap}` : it.text))) : ""; }
 
 function itemEl(id) {
   const it = cur.items[id]; const el = document.createElement("div");
@@ -290,6 +290,7 @@ function select(id) {
   el.classList.add("selected"); document.body.classList.add("picking");
   const it = cur.items[id], here = currentZoneOf(id);
   $("#imTitle").textContent = itemName(it);
+  $("#imDesc").textContent = it.desc || "";
   $("#imTiers").innerHTML = cur.tiers.map(t =>
     `<button data-t="${t.id}" class="${t.id === here ? "here" : ""}" style="background:${esc(t.color)}" title="${esc(t.label)} 줄로">${esc(t.label || "?")}</button>`).join("");
   $("#imToPool").disabled = here === "pool";
@@ -629,8 +630,12 @@ function listFromTemplate(tpl, code) {
     tiers: tpl.tiers.map(t => ({ id: uid(), label: String(t.label ?? ""), color: t.color || "#cfcfcf", items: (t.items || []).filter(id => tpl.items[id]) })),
     pool: (tpl.pool || []).filter(id => tpl.items[id]), items: {} };
   for (const [id, it] of Object.entries(tpl.items)) {
-    if (it.type === "img" && /^data:image\/(png|jpeg|webp|gif);base64,/.test(it.src || "")) l.items[id] = { type: "img", src: it.src, cap: String(it.cap || "").slice(0, 40) };
-    else if (it.type === "text") l.items[id] = { type: "text", text: String(it.text || "").slice(0, 40), cap: String(it.cap || "").slice(0, 40), bg: /^#[0-9a-f]{3,8}$/i.test(it.bg || "") ? it.bg : "#ffffff" };
+    const extra = {};
+    if (it.title) extra.title = String(it.title).slice(0, 60);
+    if (it.desc) extra.desc = String(it.desc).slice(0, 300);
+    if (it.type === "img" && (/^data:image\/(png|jpeg|webp|gif);base64,/.test(it.src || "") || /^templates\/[A-Za-z0-9_\/-]+\.(webp|png|jpe?g)$/.test(it.src || "")))
+      l.items[id] = { type: "img", src: it.src, cap: String(it.cap || "").slice(0, 40), ...extra };
+    else if (it.type === "text") l.items[id] = { type: "text", text: String(it.text || "").slice(0, 40), cap: String(it.cap || "").slice(0, 40), bg: /^#[0-9a-f]{3,8}$/i.test(it.bg || "") ? it.bg : "#ffffff", ...extra };
   }
   // 어디에도 없는 항목은 상자로
   const placed = new Set([...l.pool, ...l.tiers.flatMap(t => t.items)]);
@@ -681,6 +686,10 @@ function normalizeCode(raw) {
 async function fetchTemplate(code) {
   if (/^TM[01]-/.test(code)) return { tpl: await decodeLong(code), label: "긴 코드" };
   if (!code) throw new Error("코드를 넣어 주세요.");
+  // 1) 앱에 들어 있는 고정 수업 세트 (templates/코드.json) — 서버 없이 열림
+  if (/^[A-Z0-9]{3,12}$/.test(code)) {
+    try { const r = await fetch(`templates/${code}.json`, { cache: "no-cache" }); if (r.ok) return { tpl: await r.json(), label: code }; } catch {}
+  }
   if (!CODE_RE.test(code)) throw new Error(`코드는 영어·숫자 6자리예요. (지금 ${code.length}자리)`);
   if (!serverUrl()) throw new Error("아직 코드 서버가 연결되지 않았어요. 선생님께 알려 주세요.");
   const j = await apiGet({ code }); return { tpl: j.data, label: code };

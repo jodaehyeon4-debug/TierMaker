@@ -1,0 +1,571 @@
+{
+ "v": 1,
+ "title": "세종대왕의 업적 — 가장 중요한 업적은?",
+ "tiers": [
+  {
+   "label": "S",
+   "color": "#ff7f7f",
+   "items": []
+  },
+  {
+   "label": "A",
+   "color": "#ffbf7f",
+   "items": []
+  },
+  {
+   "label": "B",
+   "color": "#ffdf7f",
+   "items": []
+  },
+  {
+   "label": "C",
+   "color": "#ffff7f",
+   "items": []
+  },
+  {
+   "label": "D",
+   "color": "#bfff7f",
+   "items": []
+  }
+ ],
+ "pool": [
+  "s01",
+  "s02",
+  "s03",
+  "s04",
+  "s05",
+  "s06",
+  "s07",
+  "s08",
+  "s09",
+  "s10",
+  "s11",
+  "s12",
+  "s13",
+  "s14",
+  "s15",
+  "s16",
+  "s17",
+  "s18",
+  "s19",
+  "s20",
+  "s21",
+  "s22",
+  "s23",
+  "s24",
+  "s25",
+  "s26",
+  "s27",
+  "s28",
+  "s29",
+  "s30",
+  "s31",
+  "s32",
+  "s33",
+  "s34",
+  "s35",
+  "s36",
+  "s37",
+  "s38",
+  "s39",
+  "s40",
+  "s41",
+  "s42",
+  "s43",
+  "s44",
+  "s45",
+  "s46",
+  "s47",
+  "s48",
+  "s49",
+  "s50",
+  "s51",
+  "s52",
+  "s53",
+  "s54",
+  "s55",
+  "s56",
+  "s57",
+  "s58",
+  "s59",
+  "s60",
+  "s61",
+  "s62",
+  "s63",
+  "s64",
+  "s65",
+  "s66",
+  "s67"
+ ],
+ "items": {
+  "s01": {
+   "type": "img",
+   "src": "templates/SEJONG/01.webp",
+   "cap": "",
+   "title": "훈민정음 창제",
+   "desc": "백성이 쉽게 배우고 쓸 수 있는 우리 글자 28자를 만들었어요. (한글·학문 · 1443)"
+  },
+  "s02": {
+   "type": "img",
+   "src": "templates/SEJONG/02.webp",
+   "cap": "",
+   "title": "훈민정음 반포",
+   "desc": "새 글자를 온 나라에 널리 알렸어요. (한글·학문 · 1446)"
+  },
+  "s03": {
+   "type": "img",
+   "src": "templates/SEJONG/03.webp",
+   "cap": "",
+   "title": "훈민정음 해례본",
+   "desc": "글자를 만든 원리와 쓰는 법을 자세히 풀어 쓴 책이에요. (한글·학문 · 1446)"
+  },
+  "s04": {
+   "type": "img",
+   "src": "templates/SEJONG/04.webp",
+   "cap": "",
+   "title": "집현전",
+   "desc": "궁궐 안에 학자들이 연구하는 기관을 두어 인재를 길렀어요. (한글·학문 · 1420)"
+  },
+  "s05": {
+   "type": "img",
+   "src": "templates/SEJONG/05.webp",
+   "cap": "",
+   "title": "사가독서",
+   "desc": "젊은 학자들에게 휴가를 주어 책을 읽고 연구하게 했어요. (한글·학문 · 1426)"
+  },
+  "s06": {
+   "type": "img",
+   "src": "templates/SEJONG/06.webp",
+   "cap": "",
+   "title": "언문청",
+   "desc": "한글로 된 책을 만들고 펴내는 일을 맡은 관청이에요. (한글·학문 · 1440년대)"
+  },
+  "s07": {
+   "type": "img",
+   "src": "templates/SEJONG/07.webp",
+   "cap": "",
+   "title": "동국정운",
+   "desc": "우리나라 한자음을 바로잡아 훈민정음으로 적은 책이에요. (한글·학문 · 1448)"
+  },
+  "s08": {
+   "type": "img",
+   "src": "templates/SEJONG/08.webp",
+   "cap": "",
+   "title": "용비어천가",
+   "desc": "조선을 세운 조상들을 기린 노래로, 한글로 쓴 첫 작품이에요. (한글·학문 · 1445)"
+  },
+  "s09": {
+   "type": "img",
+   "src": "templates/SEJONG/09.webp",
+   "cap": "",
+   "title": "석보상절",
+   "desc": "석가모니의 일생을 한글로 풀어 쓴 책이에요. (한글·학문 · 1447)"
+  },
+  "s10": {
+   "type": "img",
+   "src": "templates/SEJONG/10.webp",
+   "cap": "",
+   "title": "월인천강지곡",
+   "desc": "세종이 직접 지은 한글 노래 모음이에요. (한글·학문 · 1447)"
+  },
+  "s11": {
+   "type": "img",
+   "src": "templates/SEJONG/11.webp",
+   "cap": "",
+   "title": "측우기",
+   "desc": "비가 온 양을 재는 기구로, 전국의 강우량을 기록했어요. (과학·천문 · 1441)"
+  },
+  "s12": {
+   "type": "img",
+   "src": "templates/SEJONG/12.webp",
+   "cap": "",
+   "title": "수표",
+   "desc": "청계천과 한강에 세워 물 높이를 재는 기둥이에요. (과학·천문 · 1441)"
+  },
+  "s13": {
+   "type": "img",
+   "src": "templates/SEJONG/13.webp",
+   "cap": "",
+   "title": "앙부일구",
+   "desc": "솥 모양의 해시계로, 길가에 두어 백성도 시간을 알 수 있었어요. (과학·천문 · 1434)"
+  },
+  "s14": {
+   "type": "img",
+   "src": "templates/SEJONG/14.webp",
+   "cap": "",
+   "title": "자격루",
+   "desc": "정해진 시간이 되면 스스로 종·북을 울리는 물시계예요. (과학·천문 · 1434)"
+  },
+  "s15": {
+   "type": "img",
+   "src": "templates/SEJONG/15.webp",
+   "cap": "",
+   "title": "혼천의",
+   "desc": "해·달·별의 위치와 움직임을 재는 천문 기구예요. (과학·천문 · 1433)"
+  },
+  "s16": {
+   "type": "img",
+   "src": "templates/SEJONG/16.webp",
+   "cap": "",
+   "title": "간의대",
+   "desc": "경복궁 안에 세운 천문대로, 간의 등으로 하늘을 관측했어요. (과학·천문 · 1434)"
+  },
+  "s17": {
+   "type": "img",
+   "src": "templates/SEJONG/17.webp",
+   "cap": "",
+   "title": "규표",
+   "desc": "해 그림자 길이로 계절과 1년의 길이를 재는 기구예요. (과학·천문 · 1430년대)"
+  },
+  "s18": {
+   "type": "img",
+   "src": "templates/SEJONG/18.webp",
+   "cap": "",
+   "title": "일성정시의",
+   "desc": "낮에는 해, 밤에는 별로 시간을 재는 시계예요. (과학·천문 · 1437)"
+  },
+  "s19": {
+   "type": "img",
+   "src": "templates/SEJONG/19.webp",
+   "cap": "",
+   "title": "현주일구",
+   "desc": "추를 매달아 수평을 맞추는 휴대용 해시계예요. (과학·천문 · 1437)"
+  },
+  "s20": {
+   "type": "img",
+   "src": "templates/SEJONG/20.webp",
+   "cap": "",
+   "title": "천평일구",
+   "desc": "말 위에서도 쓸 수 있게 만든 해시계예요. (과학·천문 · 1437)"
+  },
+  "s21": {
+   "type": "img",
+   "src": "templates/SEJONG/21.webp",
+   "cap": "",
+   "title": "정남일구",
+   "desc": "나침반 없이 정남쪽을 맞출 수 있는 해시계예요. (과학·천문 · 1437)"
+  },
+  "s22": {
+   "type": "img",
+   "src": "templates/SEJONG/22.webp",
+   "cap": "",
+   "title": "혼상",
+   "desc": "별자리를 둥근 공 위에 그린 하늘 모형이에요. (과학·천문 · 1430년대)"
+  },
+  "s23": {
+   "type": "img",
+   "src": "templates/SEJONG/23.webp",
+   "cap": "",
+   "title": "흠경각 옥루",
+   "desc": "인형들이 움직이며 시간을 알려 주는 정교한 물시계예요. (과학·천문 · 1438)"
+  },
+  "s24": {
+   "type": "img",
+   "src": "templates/SEJONG/24.webp",
+   "cap": "",
+   "title": "칠정산",
+   "desc": "서울을 기준으로 해·달·행성의 움직임을 계산한 우리 달력이에요. (과학·천문 · 1444)"
+  },
+  "s25": {
+   "type": "img",
+   "src": "templates/SEJONG/25.webp",
+   "cap": "",
+   "title": "갑인자",
+   "desc": "아름답고 정교한 금속 활자로, 책을 많이 찍어 냈어요. (과학·천문 · 1434)"
+  },
+  "s26": {
+   "type": "img",
+   "src": "templates/SEJONG/26.webp",
+   "cap": "",
+   "title": "경자자",
+   "desc": "세종 때 처음 새로 만든 금속 활자예요. (과학·천문 · 1420)"
+  },
+  "s27": {
+   "type": "img",
+   "src": "templates/SEJONG/27.webp",
+   "cap": "",
+   "title": "장영실 등용",
+   "desc": "신분이 낮아도 재능 있는 장영실을 뽑아 과학 기구를 만들게 했어요. (과학·천문 · 1420년대)"
+  },
+  "s28": {
+   "type": "img",
+   "src": "templates/SEJONG/28.webp",
+   "cap": "",
+   "title": "농사직설",
+   "desc": "우리 땅에 맞는 농사법을 농부들에게 물어 모은 책이에요. (농업·경제 · 1429)"
+  },
+  "s29": {
+   "type": "img",
+   "src": "templates/SEJONG/29.webp",
+   "cap": "",
+   "title": "공법",
+   "desc": "땅의 좋고 나쁨과 풍년·흉년에 따라 세금을 다르게 걷었어요. (농업·경제 · 1444)"
+  },
+  "s30": {
+   "type": "img",
+   "src": "templates/SEJONG/30.webp",
+   "cap": "",
+   "title": "전분 6등법",
+   "desc": "땅이 얼마나 기름진지에 따라 6등급으로 나누었어요. (농업·경제 · 1444)"
+  },
+  "s31": {
+   "type": "img",
+   "src": "templates/SEJONG/31.webp",
+   "cap": "",
+   "title": "연분 9등법",
+   "desc": "그해 농사가 잘됐는지에 따라 9등급으로 세금을 정했어요. (농업·경제 · 1444)"
+  },
+  "s32": {
+   "type": "img",
+   "src": "templates/SEJONG/32.webp",
+   "cap": "",
+   "title": "세금 여론조사",
+   "desc": "새 세금 제도에 대해 약 17만 명의 백성에게 찬반을 물었어요. (농업·경제 · 1430)"
+  },
+  "s33": {
+   "type": "img",
+   "src": "templates/SEJONG/33.webp",
+   "cap": "",
+   "title": "수차 보급",
+   "desc": "논에 물을 대는 수차(물을 퍼 올리는 기계)를 보급하려 했어요. (농업·경제 · 1430년대)"
+  },
+  "s34": {
+   "type": "img",
+   "src": "templates/SEJONG/34.webp",
+   "cap": "",
+   "title": "쓰시마 정벌",
+   "desc": "왜구의 근거지인 쓰시마를 쳤어요. (상왕 태종이 이끔) (국방·외교 · 1419)"
+  },
+  "s35": {
+   "type": "img",
+   "src": "templates/SEJONG/35.webp",
+   "cap": "",
+   "title": "4군 개척",
+   "desc": "최윤덕이 압록강 쪽에 4개의 군을 두었어요. (국방·외교 · 1430년대)"
+  },
+  "s36": {
+   "type": "img",
+   "src": "templates/SEJONG/36.webp",
+   "cap": "",
+   "title": "6진 개척",
+   "desc": "김종서가 두만강 쪽에 6개의 진을 두었어요. 지금 국경의 바탕이에요. (국방·외교 · 1430년대)"
+  },
+  "s37": {
+   "type": "img",
+   "src": "templates/SEJONG/37.webp",
+   "cap": "",
+   "title": "사민 정책",
+   "desc": "남쪽 백성을 북쪽으로 옮겨 살게 해 새 땅을 지키게 했어요. (국방·외교 · 1430년대)"
+  },
+  "s38": {
+   "type": "img",
+   "src": "templates/SEJONG/38.webp",
+   "cap": "",
+   "title": "신기전",
+   "desc": "여러 발을 한꺼번에 쏠 수 있는 로켓 화살 무기예요. (국방·외교 · 1448)"
+  },
+  "s39": {
+   "type": "img",
+   "src": "templates/SEJONG/39.webp",
+   "cap": "",
+   "title": "화포 개량",
+   "desc": "대포를 더 멀리, 정확히 쏠 수 있게 고쳤어요. (국방·외교 · 1440년대)"
+  },
+  "s40": {
+   "type": "img",
+   "src": "templates/SEJONG/40.webp",
+   "cap": "",
+   "title": "총통등록",
+   "desc": "화포 만드는 법과 화약 쓰는 법을 그림과 함께 정리한 책이에요. (국방·외교 · 1448)"
+  },
+  "s41": {
+   "type": "img",
+   "src": "templates/SEJONG/41.webp",
+   "cap": "",
+   "title": "병선 개량",
+   "desc": "바다에서 싸울 배를 더 좋게 고쳐 시험했어요. (국방·외교 · 1430년대)"
+  },
+  "s42": {
+   "type": "img",
+   "src": "templates/SEJONG/42.webp",
+   "cap": "",
+   "title": "삼포 개항",
+   "desc": "부산포·제포·염포 세 항구를 열어 일본과 무역하게 했어요. (국방·외교 · 1426)"
+  },
+  "s43": {
+   "type": "img",
+   "src": "templates/SEJONG/43.webp",
+   "cap": "",
+   "title": "계해약조",
+   "desc": "쓰시마와 약속을 맺어 무역하는 배의 수를 정했어요. (국방·외교 · 1443)"
+  },
+  "s44": {
+   "type": "img",
+   "src": "templates/SEJONG/44.webp",
+   "cap": "",
+   "title": "노비 출산휴가",
+   "desc": "관청의 여자 노비에게 출산 전후로 100일 넘게 쉬게 했어요. (백성·제도 · 1430년대)"
+  },
+  "s45": {
+   "type": "img",
+   "src": "templates/SEJONG/45.webp",
+   "cap": "",
+   "title": "남편 출산휴가",
+   "desc": "아내가 아이를 낳으면 남편에게도 30일을 쉬게 했어요. (백성·제도 · 1434)"
+  },
+  "s46": {
+   "type": "img",
+   "src": "templates/SEJONG/46.webp",
+   "cap": "",
+   "title": "금화도감",
+   "desc": "큰불이 난 뒤 만든 우리나라 첫 소방 관청이에요. (백성·제도 · 1426)"
+  },
+  "s47": {
+   "type": "img",
+   "src": "templates/SEJONG/47.webp",
+   "cap": "",
+   "title": "양로연",
+   "desc": "신분에 상관없이 노인들을 초대해 잔치를 열었어요. (백성·제도 · 1432)"
+  },
+  "s48": {
+   "type": "img",
+   "src": "templates/SEJONG/48.webp",
+   "cap": "",
+   "title": "삼복제",
+   "desc": "사형 판결은 세 번 다시 살펴 억울한 사람이 없게 했어요. (백성·제도 · 세종 때)"
+  },
+  "s49": {
+   "type": "img",
+   "src": "templates/SEJONG/49.webp",
+   "cap": "",
+   "title": "감옥 환경 개선",
+   "desc": "죄수가 덥거나 춥지 않게 감옥 시설을 고치도록 했어요. (백성·제도 · 세종 때)"
+  },
+  "s50": {
+   "type": "img",
+   "src": "templates/SEJONG/50.webp",
+   "cap": "",
+   "title": "의정부 서사제",
+   "desc": "중요한 나랏일을 재상들이 먼저 의논해 올리게 했어요. (백성·제도 · 1436)"
+  },
+  "s51": {
+   "type": "img",
+   "src": "templates/SEJONG/51.webp",
+   "cap": "",
+   "title": "법전 정리",
+   "desc": "흩어진 법을 모아 신찬경제속육전으로 정리했어요. (백성·제도 · 1433)"
+  },
+  "s52": {
+   "type": "img",
+   "src": "templates/SEJONG/52.webp",
+   "cap": "",
+   "title": "향약집성방",
+   "desc": "우리 땅에서 나는 약재로 병을 고치는 방법을 모은 책이에요. (의학 · 1433)"
+  },
+  "s53": {
+   "type": "img",
+   "src": "templates/SEJONG/53.webp",
+   "cap": "",
+   "title": "의방유취",
+   "desc": "여러 의학 지식을 한데 모은 아주 큰 의학 백과사전이에요. (의학 · 1445)"
+  },
+  "s54": {
+   "type": "img",
+   "src": "templates/SEJONG/54.webp",
+   "cap": "",
+   "title": "향약채취월령",
+   "desc": "우리 약재를 몇 월에 캐면 좋은지 정리한 책이에요. (의학 · 1431)"
+  },
+  "s55": {
+   "type": "img",
+   "src": "templates/SEJONG/55.webp",
+   "cap": "",
+   "title": "태산요록",
+   "desc": "임신과 출산, 아기 돌보기를 다룬 의학책이에요. (의학 · 1434)"
+  },
+  "s56": {
+   "type": "img",
+   "src": "templates/SEJONG/56.webp",
+   "cap": "",
+   "title": "신주무원록",
+   "desc": "사건을 공정하게 조사하도록 도운 법의학 책이에요. (의학 · 1438)"
+  },
+  "s57": {
+   "type": "img",
+   "src": "templates/SEJONG/57.webp",
+   "cap": "",
+   "title": "정간보",
+   "desc": "칸을 나누어 음의 길이까지 적을 수 있게 만든 악보예요. (음악 · 세종 때)"
+  },
+  "s58": {
+   "type": "img",
+   "src": "templates/SEJONG/58.webp",
+   "cap": "",
+   "title": "편경 제작",
+   "desc": "우리 땅에서 난 돌로 음이 정확한 악기 편경을 만들었어요. (음악 · 1427)"
+  },
+  "s59": {
+   "type": "img",
+   "src": "templates/SEJONG/59.webp",
+   "cap": "",
+   "title": "아악 정비",
+   "desc": "박연과 함께 나라 행사 음악을 바르게 정리했어요. (음악 · 1430년대)"
+  },
+  "s60": {
+   "type": "img",
+   "src": "templates/SEJONG/60.webp",
+   "cap": "",
+   "title": "여민락",
+   "desc": "'백성과 함께 즐긴다'는 뜻의 음악을 만들었어요. (음악 · 세종 때)"
+  },
+  "s61": {
+   "type": "img",
+   "src": "templates/SEJONG/61.webp",
+   "cap": "",
+   "title": "보태평·정대업",
+   "desc": "조상의 덕과 공을 기린 음악으로, 지금 종묘제례악이에요. (음악 · 세종 때)"
+  },
+  "s62": {
+   "type": "img",
+   "src": "templates/SEJONG/62.webp",
+   "cap": "",
+   "title": "관현맹인",
+   "desc": "앞이 보이지 않는 음악가에게 궁중 연주 일자리를 주었어요. (음악 · 세종 때)"
+  },
+  "s63": {
+   "type": "img",
+   "src": "templates/SEJONG/63.webp",
+   "cap": "",
+   "title": "삼강행실도",
+   "desc": "효자·충신 이야기를 그림과 글로 엮어 누구나 볼 수 있게 했어요. (책 편찬 · 1434)"
+  },
+  "s64": {
+   "type": "img",
+   "src": "templates/SEJONG/64.webp",
+   "cap": "",
+   "title": "팔도지리지",
+   "desc": "전국 8도의 땅·산물·인구를 조사해 정리한 지리책이에요. (책 편찬 · 1432)"
+  },
+  "s65": {
+   "type": "img",
+   "src": "templates/SEJONG/65.webp",
+   "cap": "",
+   "title": "효행록",
+   "desc": "효도한 사람들의 이야기를 다시 펴낸 책이에요. (책 편찬 · 1428)"
+  },
+  "s66": {
+   "type": "img",
+   "src": "templates/SEJONG/66.webp",
+   "cap": "",
+   "title": "치평요람",
+   "desc": "나라를 잘 다스린 역사 속 사례를 모은 책이에요. (책 편찬 · 1445)"
+  },
+  "s67": {
+   "type": "img",
+   "src": "templates/SEJONG/67.webp",
+   "cap": "",
+   "title": "고려사 편찬",
+   "desc": "고려의 역사를 정리하는 일을 시작했어요. (문종 때 완성) (책 편찬 · 세종 때)"
+  }
+ }
+}

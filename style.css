@@ -134,6 +134,8 @@ body.dragging,body.dragging *{cursor:grabbing!important}
   box-shadow:0 16px 36px rgba(0,0,0,.6)}
 #itemMenu.show{display:block}
 .im-title{font-weight:800;font-size:15px;margin:0 2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.im-desc{font-size:13.5px;line-height:1.5;color:#dcdcd2;margin:0 2px 10px}
+.im-desc:empty{display:none}
 .im-label{font-size:12px;color:var(--muted);margin:0 2px 5px}
 .im-tiers{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
 .im-tiers button{min-width:44px;height:40px;padding:0 9px;border-radius:8px;border:2px solid transparent;color:#171714;font-weight:800;font-size:14px;
