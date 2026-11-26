@@ -334,6 +334,7 @@ function select(id) {
     `<button data-t="${t.id}" class="${t.id === here ? "here" : ""}${t.id !== here && tierFull(t.id, id) ? " full" : ""}" style="background:${esc(t.color)}" title="${esc(t.label)} 줄로">${esc(t.label || "?")}${t.max > 0 ? `<small>${t.items.length}/${t.max}</small>` : ""}</button>`).join("");
 
   $("#imToPool").disabled = here === "pool";
+  $("#imDelete").hidden = !!it.fixed;     // 선생님이 나눠 준 카드는 지울 수 없음
   menu.classList.add("show");
   const r = el.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
   let top = r.bottom + 8; if (top + mh > innerHeight - 8) top = Math.max(8, r.top - mh - 8);
@@ -359,7 +360,7 @@ $("#imTiers").addEventListener("click", e => {
 });
 // 삭제 = 휴지통으로 (언제든 되살리기 가능)
 $("#imDelete").onclick = () => {
-  if (!selected) return;
+  if (!selected || cur.items[selected]?.fixed) return;
   const id = selected, name = itemName(cur.items[id]), from = currentZoneOf(id); deselect();
   moveItem(id, "trash"); render(); save();
   toast(`'${name}' → 휴지통`, 5000, { label: "되돌리기", run: () => {

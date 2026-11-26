@@ -142,7 +142,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .im-tiers button{min-width:44px;height:40px;padding:0 9px;border-radius:8px;border:2px solid transparent;color:#171714;font-weight:800;font-size:14px;
   max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .im-tiers button.here{border-color:#fff;box-shadow:0 0 0 1px #000 inset}
-.im-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.im-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:5px}
 .im-actions .btn{padding:0 6px;gap:5px;font-size:13.5px}
 .im-actions .ic{width:17px;height:17px}
 
