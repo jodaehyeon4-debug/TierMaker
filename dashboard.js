@@ -5,7 +5,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const dash = $("#dash");
 const code = (new URLSearchParams(location.search).get("code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-let focusG = null;
+let focusG = null, noticeDraft = "", lastData = null;
 
 function toast(m) { const t = $("#toast"); $("#toastMsg").textContent = m; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2500); }
 function nameOf(it) { return it ? (it.title || (it.type === "img" ? (it.cap || "사진") : it.text + (it.cap ? " " + it.cap : ""))) : ""; }
@@ -15,14 +15,14 @@ function tile(it, cls = "item") {
   return `<div class="${cls}" title="${esc(nameOf(it))}" style="background:${esc(it.bg || "#fff")}"><div class="txt">${esc(it.text)}</div></div>`;
 }
 
-if (!code) { dash.innerHTML = `<div class="msg">주소 끝에 <b>?code=모둠활동코드</b> 가 필요해요.<br>티어메이커 → 교사용 → 모둠 활동 열기에서 '모둠 모아 보기 열기'를 눌러 들어오세요.</div>`; return; }
-if (!TMRoom.available()) { dash.innerHTML = `<div class="msg">Firebase 설정이 아직 없어요. config.js를 확인해 주세요.</div>`; return; }
+if (!code) { dash.innerHTML = `<div class="dmsg">주소 끝에 <b>?code=모둠활동코드</b> 가 필요해요.<br>티어메이커 → 교사용 → 모둠 활동 열기에서 '모둠 모아 보기 열기'를 눌러 들어오세요.</div>`; return; }
+if (!TMRoom.available()) { dash.innerHTML = `<div class="dmsg">Firebase 설정이 아직 없어요. config.js를 확인해 주세요.</div>`; return; }
 
 TMRoom.watch(code, data => {
-  if (!data || !data.meta) { dash.innerHTML = `<div class="msg">코드 <b>${esc(code)}</b> 모둠 활동이 없거나 끝났어요.</div>`; return; }
+  if (!data || !data.meta) { dash.innerHTML = `<div class="dmsg">코드 <b>${esc(code)}</b> 모둠 활동이 없거나 끝났어요.</div>`; return; }
   draw(data);
   if (data.meta.owner === TMRoom.uid) $("#btnClose").hidden = false;
-}).catch(e => { dash.innerHTML = `<div class="msg">${esc(e.message)}</div>`; });
+}).catch(e => { dash.innerHTML = `<div class="dmsg">${esc(e.message)}</div>`; });
 
 function draw(data) {
   const meta = data.meta, n = meta.groups || 4, groups = data.groups || {};
@@ -30,23 +30,35 @@ function draw(data) {
   for (let g = 1; g <= n; g++) boards.push({ g, st: TMBuild(meta, groups[g] || {}), raw: groups[g] || {} });
   const totalItems = Object.keys(boards[0]?.st.items || {}).length;
 
+  const owner = meta.owner === TMRoom.uid;
+  const noticeBox = owner ? `<form class="notice-box" id="noticeForm"><input id="noticeInput" maxlength="120" placeholder="모든 모둠에 보낼 알림 (예: 5분 남았어요!)" value="${esc(noticeDraft)}"><button class="btn primary small">알림 보내기</button></form>` : "";
   let html = `<div class="dash-head"><h1><small>모둠 활동 · ${n}모둠</small>${esc(meta.title)}</h1>
     <div class="join-box"><div class="how">학생: <b>코드 입력</b>에<br>이 코드 → 모둠 번호·이름</div><div class="code">${esc(code)}</div></div></div>
-    <div class="groups">`;
+    ${noticeBox}<div class="groups">`;
   for (const b of boards) {
     const mem = [...new Set(Object.values(b.st.members).map(m => m && m.name).filter(Boolean))];
     const placed = b.st.tiers.reduce((s, t) => s + t.items.length, 0);
     html += `<div class="gcard${mem.length || placed ? "" : " empty"}${focusG === b.g ? " focus" : ""}" data-g="${b.g}">
       <h3>${b.g}모둠 <span class="${mem.length ? "live" : ""}">${mem.length ? "● " + mem.map(esc).join(", ") : "아직 아무도 없어요"}</span></h3>
-      <div class="tier-table mini">${b.st.tiers.map(t => `<div class="tier-row"><div class="tier-label${[...t.label].length > 3 ? " long" : ""}" style="background:${esc(t.color)}">${esc(t.label)}</div>
+      <div class="tier-table mini">${b.st.tiers.map(t => `<div class="tier-row"><div class="tier-label${[...t.label].length > 3 ? " long" : ""}" style="background:${esc(t.color)}"><span>${esc(t.label)}</span>${t.max > 0 ? `<span class="cnt${t.items.length > t.max ? " over" : t.items.length === t.max ? " full" : ""}">${t.items.length}/${t.max}</span>` : ""}</div>
         <div class="tier-items">${t.items.map(id => tile(b.st.items[id])).join("")}</div></div>`).join("")}</div>
-      <div class="left">배치 ${placed} / ${totalItems} · 남은 항목 ${b.st.pool.length}개</div></div>`;
+      <div class="left">배치 ${placed} / ${totalItems - (b.st.trash || []).length} · 남은 항목 ${b.st.pool.length}개${(b.st.trash || []).length ? ` · 휴지통 ${b.st.trash.length}` : ""}</div>
+      ${chatHtml(b.raw.chat, b.g)}</div>`;
   }
   html += `</div>` + summary(boards);
+  const hadFocus = document.activeElement && document.activeElement.id === "noticeInput";
   dash.innerHTML = html;
+  if (hadFocus) { const i = $("#noticeInput"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+  lastData = data;
   $("#backdrop").classList.toggle("show", focusG != null);
 }
 
+function chatHtml(c, g) {
+  const arr = Object.values(c || {}).filter(m => m && m.m).sort((a, b) => a.t - b.t);
+  if (!arr.length) return `<div class="gchat empty">채팅 없음</div>`;
+  const show = focusG === g ? arr.slice(-40) : arr.slice(-3);
+  return `<div class="gchat"><div class="gchat-h">채팅 ${arr.length}개${focusG === g ? "" : " · 최근 3개"}</div>${show.map(m => `<div><b>${esc(m.n)}</b> ${esc(m.m)}</div>`).join("")}</div>`;
+}
 // 반 전체: S=가장 높은 점수. 줄 수가 모둠마다 달라도 0~1 사이 점수로 맞춤
 function summary(boards) {
   const agg = {};
@@ -71,13 +83,23 @@ function summary(boards) {
   </div>`;
 }
 
+dash.addEventListener("input", e => { if (e.target.id === "noticeInput") noticeDraft = e.target.value; });
+dash.addEventListener("submit", async e => {
+  if (e.target.id !== "noticeForm") return;
+  e.preventDefault();
+  const m = noticeDraft.trim(); if (!m || !lastData) return;
+  const up = {}, t = Date.now();
+  for (let g = 1; g <= (lastData.meta.groups || 4); g++) up[`${g}/notice`] = { m, t };
+  try { await TMRoom.notifyGroups(code, up); noticeDraft = ""; $("#noticeInput").value = ""; toast("모든 모둠에 알림을 보냈어요"); } catch (err) { toast(err.message); }
+});
 dash.addEventListener("click", e => {
+  if (e.target.closest(".notice-box")) return;
   const c = e.target.closest(".gcard"); if (!c) return;
   const g = +c.dataset.g; focusG = focusG === g ? null : g;
-  document.querySelectorAll(".gcard").forEach(x => x.classList.toggle("focus", +x.dataset.g === focusG));
+  if (lastData) draw(lastData);
   $("#backdrop").classList.toggle("show", focusG != null);
 });
-$("#backdrop").onclick = () => { focusG = null; document.querySelectorAll(".gcard.focus").forEach(x => x.classList.remove("focus")); $("#backdrop").classList.remove("show"); };
+$("#backdrop").onclick = () => { focusG = null; if (lastData) draw(lastData); };
 document.addEventListener("keydown", e => { if (e.key === "Escape") $("#backdrop").onclick(); });
 $("#btnClose").onclick = async () => {
   if (!confirm(`코드 ${code} 모둠 활동을 끝낼까요?\n모둠 판이 서버에서 지워져요. 학생 기기에는 마지막 모습이 남아요.`)) return;

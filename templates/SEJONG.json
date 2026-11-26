@@ -5,27 +5,32 @@
   {
    "label": "S",
    "color": "#ff7f7f",
-   "items": []
+   "items": [],
+   "max": 3
   },
   {
    "label": "A",
    "color": "#ffbf7f",
-   "items": []
+   "items": [],
+   "max": 10
   },
   {
    "label": "B",
    "color": "#ffdf7f",
-   "items": []
+   "items": [],
+   "max": 15
   },
   {
    "label": "C",
    "color": "#ffff7f",
-   "items": []
+   "items": [],
+   "max": 17
   },
   {
    "label": "D",
    "color": "#bfff7f",
-   "items": []
+   "items": [],
+   "max": 22
   }
  ],
  "pool": [

@@ -31,6 +31,7 @@
     <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
     <symbol id="i-chev" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
     <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></symbol>
   </defs>
 </svg>
@@ -73,6 +74,7 @@
     </div>
     <div class="room-bar" id="roomBar" hidden>
       <span class="live-dot" aria-hidden="true"></span><span id="roomInfo"></span>
+      <button class="btn small" id="chatBtn"><svg class="ic"><use href="#i-chat"/></svg>채팅<span class="badge" id="chatBadge" hidden></span></button>
       <button class="btn small ghost" id="roomLeave">나가기</button>
     </div>
     <div class="board-scroll" id="boardScroll">
@@ -84,6 +86,7 @@
   <aside class="panel">
     <div class="panel-head">
       <h2>항목 상자 <span class="count" id="poolCount"></span></h2>
+      <button class="btn icon-only small trash-btn" id="btnTrash" title="휴지통" aria-label="휴지통"><svg class="ic"><use href="#i-trash"/></svg><span class="badge" id="trashCount" hidden></span></button>
       <button class="btn icon-only small" id="btnResetPlace" title="모든 항목을 상자로 되돌리기" aria-label="모든 항목을 상자로 되돌리기"><svg class="ic"><use href="#i-undo"/></svg></button>
     </div>
     <p class="panel-hint">항목을 <b>꾹 눌러</b> 원하는 줄로 끌어 놓으세요. <span class="hint-tap">한 번 누르면 수정·삭제·줄로 보내기</span></p>
@@ -102,6 +105,17 @@
   </aside>
 </div>
 
+<!-- 모둠 채팅 -->
+<section id="chatPanel" hidden aria-label="모둠 채팅">
+  <div class="chat-head"><b id="chatTitle">모둠 채팅</b><button class="btn small icon-only" id="chatClose" aria-label="채팅 닫기">✕</button></div>
+  <div class="chat-log" id="chatLog"></div>
+  <form class="chat-form" id="chatForm" autocomplete="off">
+    <input type="text" id="chatInput" maxlength="100" placeholder="모둠 친구에게 한마디 (Enter)" enterkeyhint="send">
+    <button class="btn primary small" type="submit">보내기</button>
+  </form>
+  <p class="chat-note">선생님도 채팅을 볼 수 있어요. 바른 말로 이야기해요.</p>
+</section>
+
 <!-- 항목 메뉴 -->
 <div id="itemMenu" role="dialog" aria-label="항목 메뉴">
   <div class="im-title" id="imTitle"></div>
@@ -111,17 +125,26 @@
   <div class="im-actions">
     <button class="btn small" id="imEdit"><svg class="ic"><use href="#i-pencil"/></svg>수정</button>
     <button class="btn small" id="imToPool"><svg class="ic"><use href="#i-box"/></svg>상자로</button>
-    <button class="btn small danger" id="imDelete"><svg class="ic"><use href="#i-trash"/></svg>삭제</button>
+    <button class="btn small danger" id="imDelete"><svg class="ic"><use href="#i-trash"/></svg>휴지통</button>
   </div>
 </div>
 
 <!-- 티어 설정 -->
 <div class="modal-back" id="mTier"><div class="modal">
   <h3>줄 설정</h3>
+  <p class="note warn" id="tierLockNote"></p>
   <label class="lbl" for="tierLabelInput">줄 이름</label>
   <input type="text" id="tierLabelInput" maxlength="30">
+  <div class="unlock-only">
   <label class="lbl">색깔</label>
   <div class="swatches" id="tierSwatches"></div>
+  <label class="lbl" for="tierMaxInput">이 줄에 놓을 수 있는 개수</label>
+  <div class="max-row">
+    <button class="btn icon-only" id="tMaxMinus" aria-label="하나 줄이기">−</button>
+    <input type="number" id="tierMaxInput" min="0" max="99" inputmode="numeric">
+    <button class="btn icon-only" id="tMaxPlus" aria-label="하나 늘리기">＋</button>
+    <span class="note">개까지 · 0이면 제한 없음</span>
+  </div>
   <label class="lbl">순서·추가</label>
   <div class="grid2">
     <button class="btn" id="tUp"><svg class="ic"><use href="#i-up"/></svg>위로 옮기기</button>
@@ -129,10 +152,11 @@
     <button class="btn" id="tAddAbove"><svg class="ic"><use href="#i-plus"/></svg>위에 새 줄</button>
     <button class="btn" id="tAddBelow"><svg class="ic"><use href="#i-plus"/></svg>아래에 새 줄</button>
   </div>
+  </div>
   <label class="lbl">비우기·지우기</label>
   <div class="grid2">
     <button class="btn" id="tClear"><svg class="ic"><use href="#i-box"/></svg>항목 모두 상자로</button>
-    <button class="btn danger" id="tDelete"><svg class="ic"><use href="#i-trash"/></svg>이 줄 지우기</button>
+    <button class="btn danger unlock-only" id="tDelete"><svg class="ic"><use href="#i-trash"/></svg>이 줄 지우기</button>
   </div>
   <div class="actions"><button class="btn primary" data-close>완료</button></div>
 </div></div>
@@ -255,6 +279,14 @@
     </button>
   </div>
   <ol class="mini-steps"><li>항목 이름 쓰기</li><li>줄로 끌어 놓기</li><li>저장하기</li></ol>
+</div></div>
+
+<!-- 휴지통 -->
+<div class="modal-back" id="mTrash"><div class="modal">
+  <h3>휴지통</h3>
+  <p class="note" id="trashInfo"></p>
+  <div class="trash-list" id="trashList"></div>
+  <div class="actions split"><button class="btn" id="trashRestoreAll">모두 되살리기</button><button class="btn" data-close>닫기</button></div>
 </div></div>
 
 <!-- 모둠 고르기 -->

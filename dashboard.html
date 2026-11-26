@@ -49,7 +49,16 @@
   .bar i{display:block;height:100%;background:var(--accent)}
   .dist{display:flex;gap:2px;flex-wrap:wrap}
   .dist i{font-style:normal;font-size:11.5px;font-weight:800;color:#171714;border-radius:4px;padding:1px 5px}
-  .msg{padding:60px 20px;text-align:center;color:var(--muted);font-size:16px}
+  .gchat{margin:8px 4px 0;padding:6px 8px;background:#1a1a16;border-radius:8px;font-size:12.5px;line-height:1.5;color:#dcdcd2;max-height:96px;overflow:auto}
+  .gcard.focus .gchat{max-height:none;font-size:15px}
+  .gchat.empty{color:var(--dim)}
+  .gchat-h{font-size:11px;color:var(--muted);font-weight:700}
+  .gchat b{color:var(--accent)}
+  .notice-box{display:flex;gap:8px;margin:-4px 0 14px}
+  .notice-box input{flex:1;height:40px;background:#141411;border:1px solid #4a4a40;color:var(--text);border-radius:10px;padding:0 12px;font-size:15px}
+  .mini .tier-label{flex-direction:column;gap:1px}
+  .mini .tier-label .cnt{font-size:10px;line-height:14px;padding:0 4px}
+  .dmsg{padding:60px 20px;text-align:center;color:var(--muted);font-size:16px}
   .tools{display:flex;gap:8px}
   @media (max-width:900px){.summary{grid-template-columns:1fr}.groups{grid-template-columns:1fr}}
 </style>
@@ -63,7 +72,7 @@
     <button class="btn danger ghost" id="btnClose" hidden>활동 끝내기</button>
   </div>
 </header>
-<main class="dash" id="dash"><div class="msg">불러오는 중…</div></main>
+<main class="dash" id="dash"><div class="dmsg">불러오는 중…</div></main>
 <div class="backdrop" id="backdrop"></div>
 <div id="toast" role="status"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
 <script src="config.js"></script>

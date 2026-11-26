@@ -62,7 +62,7 @@ function newList(title = "") {
   const now = Date.now();
   return { id: uid(), title, created: now, updated: now,
     tiers: DEFAULT_TIERS.map(([label, color]) => ({ id: uid(), label, color, items: [] })),
-    pool: [], items: {} };
+    pool: [], trash: [], items: {} };
 }
 let lists = lsGet(LS_LISTS, {});
 let cur = lists[lsGet(LS_CUR, "")] || null;
@@ -81,8 +81,12 @@ function save(now = false) {
       toast("저장 공간이 꽉 찼어요. 내 기록에서 안 쓰는 티어표를 지워 주세요.", 4500);
     }
   };
-  now ? run() : (saveTimer = setTimeout(run, 300));
+  now ? run() : (saveTimer = setTimeout(() => { saveTimer = null; run(); }, 300));
 }
+// 창을 닫거나 다른 앱으로 가기 직전에 바로 저장
+function flushSave() { if (!saveTimer) return; clearTimeout(saveTimer); saveTimer = null; cur.updated = Date.now(); lists[cur.id] = cur; try { lsSet(LS_LISTS, lists); lsSet(LS_CUR, cur.id); } catch {} }
+window.addEventListener("pagehide", flushSave);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushSave(); });
 function persistLists() { try { lsSet(LS_LISTS, lists); lsSet(LS_CUR, cur.id); } catch { toast("저장 공간이 부족해요."); } }
 
 /* 되돌리기 (한 단계) */
@@ -130,7 +134,8 @@ function render() {
     const row = document.createElement("div"); row.className = "tier-row"; row.dataset.tier = t.id;
     const n = [...t.label].length;
     const lab = document.createElement("div"); lab.className = "tier-label" + (n > 8 ? " xlong" : n > 3 ? " long" : "");
-    lab.style.background = t.color; lab.textContent = t.label; lab.title = "눌러서 이름·색 바꾸기";
+    lab.style.background = t.color; lab.title = "눌러서 줄 설정";
+    lab.innerHTML = `<span class="lab-text">${esc(t.label)}</span>` + (t.max > 0 ? `<span class="cnt${t.items.length > t.max ? " over" : t.items.length === t.max ? " full" : ""}">${t.items.length}/${t.max}</span>` : "");
     lab.addEventListener("click", () => { if (!selected) openTier(t.id); });
     const zone = document.createElement("div"); zone.className = "tier-items dropzone"; zone.dataset.zone = t.id;
     t.items.forEach(id => zone.appendChild(itemEl(id)));
@@ -141,12 +146,24 @@ function render() {
   });
   poolEl.innerHTML = "";
   cur.pool.forEach(id => poolEl.appendChild(itemEl(id)));
+  $("#btnAddRow").hidden = tiersLocked();
   updateCount();
+}
+/* 줄 개수 제한 */
+function tiersLocked() { return room ? !!(room.meta && room.meta.locked) : !!cur.capsLocked; }
+function tierById(id) { return cur.tiers.find(t => t.id === id); }
+function tierFull(tid, exceptId) { const t = tierById(tid); return !!(t && t.max > 0 && t.items.filter(x => x !== exceptId).length >= t.max); }
+function fullMsg(tid) { const t = tierById(tid); if (t) toast(`'${t.label}' 줄은 ${t.max}개까지예요. 다른 항목을 빼고 넣어 보세요.`, 2800); }
+function tryMove(id, zoneId, idx = -1) {
+  if (zoneId !== "pool" && tierFull(zoneId, id)) { fullMsg(zoneId); return false; }
+  moveItem(id, zoneId, idx); return true;
 }
 function markEmpty() { tierTable.classList.toggle("empty", cur.tiers.every(t => !t.items.length)); }
 function updateCount() {
-  const total = Object.keys(cur.items).length;
-  $("#poolCount").textContent = total ? `${cur.pool.length} / ${total}` : "";
+  const total = Object.keys(cur.items).length - (cur.trash || []).filter(id => cur.items[id]).length;
+  const placed = total - cur.pool.length;
+  $("#poolCount").textContent = total ? `남은 ${cur.pool.length} · 놓은 ${placed} · 전체 ${total}` : "";
+  renderTrash();
   markEmpty();
 }
 
@@ -173,7 +190,8 @@ document.addEventListener("pointerdown", e => {
     const row = e.target.closest(".tier-row"), inPool = e.target.closest("#pool");
     if (selected && (row || inPool) && !e.target.closest(".tier-ctrl")) {
       e.preventDefault();
-      const id = selected; deselect(); moveItem(id, row ? row.dataset.tier : "pool"); render(); save();
+      const id = selected; deselect();
+      if (tryMove(id, row ? row.dataset.tier : "pool")) { render(); save(); }
       suppressClick = true; setTimeout(() => suppressClick = false, 450);
       $(`.item[data-id="${id}"]`)?.classList.add("pop");
       return;
@@ -205,6 +223,7 @@ function startDrag() {
   const g = el.cloneNode(true); g.classList.add("drag-ghost"); g.classList.remove("selected", "pressing");
   g.style.width = el.offsetWidth + "px"; g.style.height = el.offsetHeight + "px";
   g.style.left = (drag.x - drag.ox) + "px"; g.style.top = (drag.y - drag.oy) + "px";
+  drag.origParent = el.parentNode; drag.origNext = el.nextElementSibling;
   document.body.appendChild(g); drag.ghost = g; el.classList.add("dragging-src"); document.body.classList.add("dragging");
   if (navigator.vibrate && drag.touch) try { navigator.vibrate(12); } catch {}
   autoScrollLoop();
@@ -233,8 +252,17 @@ function zoneAt(x, y) {
 function placeAt(x, y) {
   const zone = zoneAt(x, y);
   const hl = z => z && (z === poolEl ? z : z.closest(".tier-row"));
-  if (drag.zone !== zone) { hl(drag.zone)?.classList.remove("drop-hover"); hl(zone)?.classList.add("drop-hover"); }
-  drag.zone = zone;
+  const full = !!(zone && zone !== poolEl && tierFull(zone.dataset.zone, drag.el.dataset.id));
+  if (drag.zone !== zone || drag.full !== full) {
+    hl(drag.zone)?.classList.remove("drop-hover", "drop-full");
+    hl(zone)?.classList.add(full ? "drop-full" : "drop-hover");
+  }
+  drag.zone = zone; drag.full = full;
+  if (full) {   // 꽉 찬 줄: 원래 자리로 돌려놓고 놓지 못하게
+    const p = drag.origParent, nx = drag.origNext && drag.origNext.parentNode === p ? drag.origNext : null;
+    if (p && (drag.el.parentNode !== p || drag.el.nextElementSibling !== nx)) p.insertBefore(drag.el, nx);
+    return;
+  }
   if (!zone) return;
   const el = drag.el, ref = refNode(zone, x, y), next = nextItem(el);
   if (!(el.parentNode === zone && ref === next) && ref !== el) zone.insertBefore(el, ref);
@@ -270,7 +298,7 @@ function cleanupDrag() {
   clearTimeout(d.timer); cancelAnimationFrame(d.raf);
   d.el.classList.remove("pressing", "dragging-src"); document.body.classList.remove("dragging");
   if (d.ghost) d.ghost.remove();
-  if (d.zone) (d.zone === poolEl ? d.zone : d.zone.closest(".tier-row"))?.classList.remove("drop-hover");
+  if (d.zone) (d.zone === poolEl ? d.zone : d.zone.closest(".tier-row"))?.classList.remove("drop-hover", "drop-full");
   return d;
 }
 function cancelPress() { cleanupDrag(); }
@@ -278,12 +306,13 @@ function onCancel(e) { if (drag && e.pointerId === drag.pid) { const d = cleanup
 function onUp(e) {
   if (!drag || e.pointerId !== drag.pid) return;
   const d = cleanupDrag();
+  if (d.started && d.full) fullMsg(d.zone.dataset.zone);
   if (d.started) {
     if (room) {      // 모둠: 내가 옮긴 그 항목 하나만 최신 상태 위에 반영
       const zEl = d.el.parentNode, id = d.el.dataset.id;
       const z = zEl === poolEl ? "pool" : zEl?.dataset?.zone, idx = zEl ? $$(".item", zEl).indexOf(d.el) : -1;
       if (pendingRemote) applyRemote();
-      if (z && cur.items[id]) { moveItem(id, z, idx); render(); save(); }
+      if (z && cur.items[id]) { if (tryMove(id, z, idx)) save(); render(); }
     } else syncFromDOM();
   }
   else selected === d.el.dataset.id ? deselect() : select(d.el.dataset.id);
@@ -302,7 +331,8 @@ function select(id) {
   $("#imTitle").textContent = itemName(it);
   $("#imDesc").textContent = it.desc || "";
   $("#imTiers").innerHTML = cur.tiers.map(t =>
-    `<button data-t="${t.id}" class="${t.id === here ? "here" : ""}" style="background:${esc(t.color)}" title="${esc(t.label)} 줄로">${esc(t.label || "?")}</button>`).join("");
+    `<button data-t="${t.id}" class="${t.id === here ? "here" : ""}${t.id !== here && tierFull(t.id, id) ? " full" : ""}" style="background:${esc(t.color)}" title="${esc(t.label)} 줄로">${esc(t.label || "?")}${t.max > 0 ? `<small>${t.items.length}/${t.max}</small>` : ""}</button>`).join("");
+
   $("#imToPool").disabled = here === "pool";
   menu.classList.add("show");
   const r = el.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
@@ -315,22 +345,57 @@ function deselect() {
   selected = null; menu.classList.remove("show"); document.body.classList.remove("picking");
 }
 function moveItem(id, zoneId, idx = -1) {
+  if (!cur.trash) cur.trash = [];
   cur.tiers.forEach(t => t.items = t.items.filter(x => x !== id));
   cur.pool = cur.pool.filter(x => x !== id);
-  const arr = zoneId === "pool" ? cur.pool : (cur.tiers.find(t => t.id === zoneId) || {}).items || cur.pool;
+  cur.trash = cur.trash.filter(x => x !== id);
+  const arr = zoneId === "pool" ? cur.pool : zoneId === "trash" ? cur.trash : (cur.tiers.find(t => t.id === zoneId) || {}).items || cur.pool;
   idx < 0 || idx > arr.length ? arr.push(id) : arr.splice(idx, 0, id);
 }
 $("#imTiers").addEventListener("click", e => {
   const b = e.target.closest("button[data-t]"); if (!b || !selected) return;
-  const id = selected; deselect(); moveItem(id, b.dataset.t); render(); save();
+  const id = selected; deselect(); if (!tryMove(id, b.dataset.t)) return; render(); save();
   const el = $(`.item[data-id="${id}"]`); el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
 });
+// 삭제 = 휴지통으로 (언제든 되살리기 가능)
 $("#imDelete").onclick = () => {
   if (!selected) return;
-  const id = selected, name = itemName(cur.items[id]); deselect(); snapshot();
-  cur.tiers.forEach(t => t.items = t.items.filter(x => x !== id));
-  cur.pool = cur.pool.filter(x => x !== id);
-  delete cur.items[id]; render(); save(); offerUndo(`'${name}'을(를) 지웠어요`);
+  const id = selected, name = itemName(cur.items[id]), from = currentZoneOf(id); deselect();
+  moveItem(id, "trash"); render(); save();
+  toast(`'${name}' → 휴지통`, 5000, { label: "되돌리기", run: () => {
+    if (!(cur.trash || []).includes(id)) return;
+    if (!tryMove(id, from)) moveItem(id, "pool"); render(); save();
+  }});
+};
+/* 휴지통 */
+function renderTrash() {
+  const ids = (cur.trash || []).filter(id => cur.items[id]);
+  const b = $("#trashCount"); b.hidden = !ids.length; b.textContent = ids.length;
+  if (!$("#mTrash").classList.contains("show")) return;
+  $("#trashInfo").textContent = ids.length ? `지운 항목 ${ids.length}개 · 되살리면 항목 상자로 돌아가요.` : "휴지통이 비어 있어요.";
+  $("#trashList").innerHTML = ids.map(id => {
+    const it = cur.items[id];
+    return `<div class="trash-item" data-id="${id}"><div class="trash-tile"></div><span>${esc(itemName(it))}</span>
+      <button class="btn small" data-act="restore">되살리기</button>
+      ${it.fixed ? "" : `<button class="btn small icon-only danger" data-act="purge" title="영구 삭제" aria-label="영구 삭제">${icon("trash")}</button>`}</div>`;
+  }).join("");
+  $$("#trashList .trash-item").forEach(row => row.querySelector(".trash-tile").appendChild(itemEl(row.dataset.id)));
+  $("#trashRestoreAll").disabled = !ids.length;
+}
+$("#btnTrash").onclick = () => { openModal("mTrash"); renderTrash(); };
+$("#trashList").addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const id = b.closest(".trash-item").dataset.id, name = itemName(cur.items[id]);
+  if (b.dataset.act === "restore") { moveItem(id, "pool"); toast(`'${name}' 되살렸어요`); }
+  else {
+    if (!confirm(`'${name}'을(를) 영구히 지울까요? 되돌릴 수 없어요.`)) return;
+    cur.trash = cur.trash.filter(x => x !== id); delete cur.items[id];
+  }
+  render(); save(); renderTrash();
+});
+$("#trashRestoreAll").onclick = () => {
+  const n = (cur.trash || []).length; (cur.trash || []).slice().forEach(id => moveItem(id, "pool"));
+  render(); save(); renderTrash(); toast(`${n}개를 되살렸어요`);
 };
 $("#imToPool").onclick = () => { if (!selected) return; const id = selected; deselect(); moveItem(id, "pool"); render(); save(); };
 let editingId = null;
@@ -439,12 +504,25 @@ function drawSwatches(box, colors, current, onPick) {
 function openTier(id) {
   tierId = id; const t = cur.tiers.find(x => x.id === id); if (!t) return;
   openModal("mTier");
+  const locked = tiersLocked();
+  $("#mTier .modal").classList.toggle("locked", locked);
+  $("#tierLabelInput").readOnly = locked;
+  $("#tierMaxInput").value = t.max || 0;
+  $("#tierLockNote").textContent = locked ? (t.max > 0 ? `선생님이 정한 줄이에요. 이 줄에는 ${t.max}개까지 놓을 수 있어요.` : "선생님이 정한 줄이에요.") : "";
   $("#tierLabelInput").value = t.label;
   drawSwatches($("#tierSwatches"), TIER_COLORS, t.color, c => { t.color = c; render(); save(); });
   updateTierBtns();
 }
 function updateTierBtns() { const i = tierIndex(); $("#tUp").disabled = i <= 0; $("#tDown").disabled = i >= cur.tiers.length - 1; }
+function setMax(v) {
+  const t = cur.tiers.find(x => x.id === tierId); if (!t || tiersLocked()) return;
+  t.max = Math.max(0, Math.min(99, parseInt(v, 10) || 0)); $("#tierMaxInput").value = t.max; render(); save();
+}
+$("#tierMaxInput").addEventListener("change", e => setMax(e.target.value));
+$("#tMaxMinus").onclick = () => setMax((+$("#tierMaxInput").value || 0) - 1);
+$("#tMaxPlus").onclick = () => setMax((+$("#tierMaxInput").value || 0) + 1);
 $("#tierLabelInput").addEventListener("input", e => {
+  if (tiersLocked()) return;
   const t = cur.tiers.find(x => x.id === tierId); if (!t) return;
   t.label = e.target.value; render(); save();
 });
@@ -634,7 +712,7 @@ function makeTemplate(toPool) {
   const used = new Set([...cur.pool, ...cur.tiers.flatMap(t => t.items)]);
   const items = {}; used.forEach(id => { if (cur.items[id]) items[id] = cur.items[id]; });
   const tpl = { v: 1, title: cur.title || "티어표",
-    tiers: cur.tiers.map(t => ({ label: t.label, color: t.color, items: toPool ? [] : t.items.filter(id => items[id]) })),
+    tiers: cur.tiers.map(t => ({ label: t.label, color: t.color, max: t.max || 0, items: toPool ? [] : t.items.filter(id => items[id]) })),
     pool: toPool ? [...cur.tiers.flatMap(t => t.items), ...cur.pool].filter(id => items[id]) : cur.pool.filter(id => items[id]),
     items };
   return tpl;
@@ -643,8 +721,8 @@ function listFromTemplate(tpl, code) {
   if (!tpl || !Array.isArray(tpl.tiers) || typeof tpl.items !== "object") throw new Error("코드 내용이 올바르지 않아요");
   const now = Date.now();
   const l = { id: uid(), title: String(tpl.title || "티어표"), created: now, updated: now, fromCode: code,
-    tiers: tpl.tiers.map(t => ({ id: uid(), label: String(t.label ?? ""), color: t.color || "#cfcfcf", items: (t.items || []).filter(id => tpl.items[id]) })),
-    pool: (tpl.pool || []).filter(id => tpl.items[id]), items: {} };
+    tiers: tpl.tiers.map(t => ({ id: uid(), label: String(t.label ?? ""), color: t.color || "#cfcfcf", max: Math.max(0, parseInt(t.max, 10) || 0), items: (t.items || []).filter(id => tpl.items[id]) })),
+    pool: (tpl.pool || []).filter(id => tpl.items[id]), trash: [], items: {} };
   for (const [id, it] of Object.entries(tpl.items)) {
     const extra = {};
     if (it.title) extra.title = String(it.title).slice(0, 60);
@@ -653,6 +731,8 @@ function listFromTemplate(tpl, code) {
       l.items[id] = { type: "img", src: it.src, cap: String(it.cap || "").slice(0, 40), ...extra };
     else if (it.type === "text") l.items[id] = { type: "text", text: String(it.text || "").slice(0, 40), cap: String(it.cap || "").slice(0, 40), bg: /^#[0-9a-f]{3,8}$/i.test(it.bg || "") ? it.bg : "#ffffff", ...extra };
   }
+  l.capsLocked = l.tiers.some(t => t.max > 0);
+  for (const id in l.items) l.items[id].fixed = true;     // 선생님이 준 항목은 지울 수 없음
   // 어디에도 없는 항목은 상자로
   const placed = new Set([...l.pool, ...l.tiers.flatMap(t => t.items)]);
   Object.keys(l.items).forEach(id => { if (!placed.has(id)) l.pool.push(id); });
@@ -843,20 +923,78 @@ async function joinRoom(code, g, name, meta) {
   l.room = { code, g, name };
   deselect(); cur = l;
   room = { code, g, name, meta, remote: null };
+  chat.keys = null; chat.seen = 0; chat.last = 0;
   const mine = room;
   const h = await TMRoom.join(code, g, name, grp => { if (room === mine) onRemote(grp); });
   if (room !== mine) { h.leave(); return; }
   room.h = h;
   renderRoomBar(); render();
 }
-function leaveRoom() { if (room && room.h) room.h.leave(); room = null; pendingRemote = false; renderRoomBar(); render(); }
+function leaveRoom() { if (room && room.h) room.h.leave(); room = null; pendingRemote = false; chat.keys = null; $("#chatPanel").hidden = true; $("#chatLog").innerHTML = ""; renderRoomBar(); render(); }
+
+/* ---------- 모둠 채팅 ---------- */
+const chat = { keys: null, seen: 0, last: 0 };
+const BAD = ["씨발","시발","ㅅㅂ","ㅆㅂ","병신","ㅂㅅ","개새","새끼","좆","존나","졸라","닥쳐","꺼져","미친놈","미친년","지랄","ㅈㄹ","fuck","shit"];
+function cleanWords(t) { let s = t; BAD.forEach(w => { s = s.split(w).join("*".repeat([...w].length)); }); return s; }
+function chatSeenKey() { return room ? `tm.v1.chatseen.${room.code}.${room.g}.${TMRoom.uid}` : ""; }
+function renderChat(c, notice) {
+  const arr = Object.entries(c).map(([k, v]) => ({ k, ...v })).filter(m => m && m.m).sort((a, b) => a.t - b.t).slice(-80);
+  if (notice && notice.m) arr.push({ k: "notice" + notice.t, n: "선생님", m: notice.m, t: notice.t, notice: true }), arr.sort((a, b) => a.t - b.t);
+  const keys = arr.map(m => m.k).join(",");
+  if (keys === chat.keys) return;
+  const firstLoad = chat.keys === null; chat.keys = keys;
+  if (!chat.seen) chat.seen = lsGet(chatSeenKey(), 0) || 0;
+  const log = $("#chatLog"), atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+  const t2 = t => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`; };
+  log.innerHTML = arr.map(m => `<div class="msg${m.notice ? " notice" : m.u === TMRoom.uid ? " mine" : ""}"><span class="who">${esc(m.n || "친구")}</span>${esc(m.m)}<span class="when">${t2(m.t)}</span></div>`).join("");
+  if (atBottom || firstLoad) log.scrollTop = log.scrollHeight;
+  const open = !$("#chatPanel").hidden;
+  const fresh = arr.filter(m => m.t > chat.seen && m.u !== TMRoom.uid);
+  if (open) markChatSeen(arr);
+  else {
+    const b = $("#chatBadge"); b.hidden = !fresh.length; b.textContent = fresh.length > 9 ? "9+" : fresh.length;
+    const newest = fresh[fresh.length - 1];
+    if (newest && !firstLoad && newest.t > chat.last) toast(`${newest.notice ? "📢 선생님" : newest.n}: ${newest.m}`, newest.notice ? 7000 : 2800);
+  }
+  if (arr.length) chat.last = Math.max(chat.last, arr[arr.length - 1].t);
+  // 너무 많이 쌓이면 오래된 것 정리
+  const all = Object.keys(c); if (all.length > 200 && room && room.h) { const up = {}; Object.entries(c).sort((a, b) => a[1].t - b[1].t).slice(0, 60).forEach(([k]) => up[`chat/${k}`] = null); room.h.update(up); }
+}
+function markChatSeen(arr) {
+  const t = arr && arr.length ? arr[arr.length - 1].t : Date.now();
+  chat.seen = Math.max(chat.seen, t); try { lsSet(chatSeenKey(), chat.seen); } catch {}
+  $("#chatBadge").hidden = true;
+}
+$("#chatBtn").onclick = () => {
+  const p = $("#chatPanel"); p.hidden = !p.hidden;
+  if (!p.hidden) { $("#chatTitle").textContent = `${room ? room.g + "모둠 " : ""}채팅`; const log = $("#chatLog"); log.scrollTop = log.scrollHeight; markChatSeen(); setTimeout(() => $("#chatInput").focus(), 50); }
+};
+$("#chatClose").onclick = () => { $("#chatPanel").hidden = true; };
+let lastSend = 0;
+$("#chatInput").addEventListener("keydown", e => { if (e.key === "Enter" && e.isComposing) e.preventDefault(); });
+$("#chatForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const inp = $("#chatInput"), m = cleanWords(inp.value.trim()).slice(0, 100);
+  if (!m || !room || !room.h) return;
+  if (Date.now() - lastSend < 1200) { toast("조금 천천히 보내 주세요"); return; }
+  lastSend = Date.now();
+  const k = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  room.h.update({ [`chat/${k}`]: { n: room.name, u: TMRoom.uid, t: Date.now(), m } }).catch(() => toast("보내지 못했어요. 인터넷을 확인해 주세요."));
+  inp.value = "";
+});
 
 function zoneMap(st) {
   const m = {}; st.tiers.forEach(t => t.items.forEach((id, i) => m[id] = { z: t.id, o: i, label: t.label })); st.pool.forEach((id, i) => m[id] = { z: "pool", o: i, label: "상자" });
+  (st.trash || []).forEach((id, i) => m[id] = { z: "trash", o: i, label: "휴지통" });
   return m;
 }
 function onRemote(grp) {
   if (!room) return;
+  renderChat(grp.chat || {}, grp.notice);
+  // 채팅·접속자만 바뀌었으면 판은 다시 그리지 않음
+  const sig = JSON.stringify([grp.pos || null, grp.items || null, grp.tiers || null]);
+  if (room.remote && sig === room.sig) { room.remote.members = grp.members || {}; renderRoomBar(); return; }
+  room.sig = sig;
   const st = TMBuild(room.meta, grp), prev = room.remote;
   room.remote = st;
   if (prev) {   // 친구가 옮긴 것 알려 주기
@@ -877,7 +1015,7 @@ function applyRemote() {
   pendingRemote = false;
   const st = room.remote;
   cur.title = `${st.title} · ${room.g}모둠`;
-  cur.tiers = clone(st.tiers); cur.pool = [...st.pool]; cur.items = clone(st.items);
+  cur.tiers = clone(st.tiers); cur.pool = [...st.pool]; cur.trash = [...(st.trash || [])]; cur.items = clone(st.items);
   const sel = selected;
   render(); renderRoomBar();
   (room.flash || []).forEach(id => $(`.item[data-id="${id}"]`)?.classList.add("remote-moved")); room.flash = [];
@@ -888,7 +1026,7 @@ function pushRoom() {
   if (!room || !room.remote || !room.h) return;
   const r = room.remote, up = {}, me = { by: room.name, u: TMRoom.uid, t: Date.now() };
   const rz = zoneMap(r);
-  [...cur.tiers.map(t => [t.id, t.items]), ["pool", cur.pool]].forEach(([z, ids]) => ids.forEach((id, i) => {
+  [...cur.tiers.map(t => [t.id, t.items]), ["pool", cur.pool], ["trash", cur.trash || []]].forEach(([z, ids]) => ids.forEach((id, i) => {
     const p = rz[id]; if (!p || p.z !== z || p.o !== i) up[`pos/${id}`] = { z, o: i, ...me };
   }));
   for (const id in r.items) if (!cur.items[id]) up[`pos/${id}`] = { z: "x", ...me };
@@ -897,12 +1035,12 @@ function pushRoom() {
     if (a !== b) up[`items/${id}`] = JSON.parse(a);
   }
   const tn = {}, tr = {};
-  cur.tiers.forEach((t, i) => tn[t.id] = { label: t.label, color: t.color, o: i });
-  r.tiers.forEach((t, i) => tr[t.id] = { label: t.label, color: t.color, o: i });
+  cur.tiers.forEach((t, i) => tn[t.id] = { label: t.label, color: t.color, o: i, max: t.max || 0 });
+  r.tiers.forEach((t, i) => tr[t.id] = { label: t.label, color: t.color, o: i, max: t.max || 0 });
   if (JSON.stringify(tn) !== JSON.stringify(tr)) up.tiers = tn;
   if (!Object.keys(up).length) return;
   // 화면에 바로 반영되도록 기준 상태도 갱신
-  room.remote = { ...r, tiers: clone(cur.tiers), pool: [...cur.pool], items: clone(cur.items) };
+  room.remote = { ...r, tiers: clone(cur.tiers), pool: [...cur.pool], trash: [...(cur.trash || [])], items: clone(cur.items) };
   room.h.update(up).catch(() => toast("모둠과 공유하지 못했어요. 인터넷 연결을 확인해 주세요.", 3500));
 }
 function renderRoomBar() {
@@ -967,7 +1105,7 @@ $("#btnMakeRoom").onclick = async () => {
   try {
     const tpl = JSON.parse(JSON.stringify(makeTemplate($("#tplToPool").checked)));
     const groups = +$("#grpCount").value;
-    const code = await TMRoom.createSession({ title: tpl.title, groups, tpl });
+    const code = await TMRoom.createSession({ title: tpl.title, groups, tpl, locked: tpl.tiers.some(t => t.max > 0) });
     const rows = lsGet(LS_MYROOMS, []); rows.unshift({ code, title: tpl.title, groups, created: Date.now() }); lsSet(LS_MYROOMS, rows.slice(0, 30));
     const dash = location.origin + location.pathname.replace(/[^/]*$/, "") + "dashboard.html?code=" + code;
     $("#roomResult").innerHTML = `<div class="code-big">${code}</div>

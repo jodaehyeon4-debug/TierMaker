@@ -37,11 +37,11 @@ window.TMRoom = (() => {
   const val = async p => (await ref(p).get()).val();
   const makeCode = () => Array.from({ length: 6 }, () => ALPHA[Math.floor(Math.random() * ALPHA.length)]).join("");
 
-  async function createSession({ title, groups, tpl }) {
+  async function createSession({ title, groups, tpl, locked = false }) {
     await init();
     let code;
     for (let i = 0; i < 10; i++) { code = makeCode(); if (!(await val(`sessions/${code}/meta`))) break; }
-    await ref(`sessions/${code}/meta`).set({ title, groups, owner: uid, created: Date.now(), tpl });
+    await ref(`sessions/${code}/meta`).set({ title, groups, owner: uid, created: Date.now(), tpl, locked: !!locked });
     return code;
   }
   async function getSession(code) { await init(); return await val(`sessions/${code}/meta`); }
@@ -50,6 +50,11 @@ window.TMRoom = (() => {
     const g = (await val(`sessions/${code}/groups`)) || {};
     const out = {}; for (const k in g) out[k] = Object.keys((g[k] && g[k].members) || {}).length;
     return out;
+  }
+  async function notifyGroups(code, paths) {
+    await init();
+    const up = {}; for (const k in paths) up[`sessions/${code}/groups/${k}`] = paths[k];
+    await ref("").update(up);
   }
   async function closeSession(code) {
     await init();
@@ -82,7 +87,7 @@ window.TMRoom = (() => {
     r.on("value", h);
     return () => r.off("value", h);
   }
-  return { available, init, createSession, getSession, groupCounts, closeSession, join, watch, get uid() { return uid; } };
+  return { available, init, notifyGroups, createSession, getSession, groupCounts, closeSession, join, watch, get uid() { return uid; } };
 })();
 
 /* 템플릿 + 모둠 데이터 → 화면용 티어표 (앱·교사 화면 공용) */
@@ -91,15 +96,18 @@ window.TMBuild = function (meta, group) {
   group = group || {};
   const tplTiers = Array.isArray(tpl.tiers) ? tpl.tiers : Object.values(tpl.tiers || {});
   let tiers;
-  if (group.tiers) tiers = Object.entries(group.tiers).map(([id, t]) => ({ id, label: t.label || "", color: t.color || "#cfcfcf", o: t.o || 0 })).sort((a, b) => a.o - b.o);
-  else tiers = tplTiers.map((t, i) => ({ id: "t" + i, label: t.label || "", color: t.color || "#cfcfcf", o: i }));
+  if (group.tiers) tiers = Object.entries(group.tiers).map(([id, t]) => ({ id, label: t.label || "", color: t.color || "#cfcfcf", o: t.o || 0, max: t.max || 0 })).sort((a, b) => a.o - b.o);
+  else tiers = tplTiers.map((t, i) => ({ id: "t" + i, label: t.label || "", color: t.color || "#cfcfcf", o: i, max: t.max || 0 }));
+  if (meta && meta.locked)   // 잠긴 활동: 줄 이름·색·개수는 항상 선생님 템플릿대로
+    tiers = tplTiers.map((t, i) => ({ id: "t" + i, label: t.label || "", color: t.color || "#cfcfcf", o: i, max: t.max || 0 }));
   const items = Object.assign({}, tpl.items || {}, group.items || {});
+  for (const id in tpl.items || {}) items[id] = Object.assign({}, items[id], { fixed: true });
   // 기본 위치 = 템플릿 위치
   const pos = {};
   tplTiers.forEach((t, i) => (Array.isArray(t.items) ? t.items : Object.values(t.items || {})).forEach((id, j) => pos[id] = { z: "t" + i, o: j }));
   (Array.isArray(tpl.pool) ? tpl.pool : Object.values(tpl.pool || {})).forEach((id, j) => pos[id] = { z: "pool", o: j });
   Object.assign(pos, group.pos || {});
-  const zones = {}; tiers.forEach(t => zones[t.id] = []); zones.pool = [];
+  const zones = {}; tiers.forEach(t => zones[t.id] = []); zones.pool = []; zones.trash = [];
   for (const id in items) {
     const p = pos[id] || { z: "pool", o: 9999 };
     if (p.z === "x") { delete items[id]; continue; }
@@ -108,8 +116,8 @@ window.TMBuild = function (meta, group) {
   const sortZ = arr => arr.sort((a, b) => a[1] - b[1] || a[2] - b[2] || (a[0] < b[0] ? -1 : 1)).map(x => x[0]);
   return {
     title: meta && meta.title || "",
-    tiers: tiers.map(t => ({ id: t.id, label: t.label, color: t.color, items: sortZ(zones[t.id]) })),
-    pool: sortZ(zones.pool), items, pos,
+    tiers: tiers.map(t => ({ id: t.id, label: t.label, color: t.color, max: t.max, items: sortZ(zones[t.id]) })),
+    pool: sortZ(zones.pool), trash: sortZ(zones.trash), items, pos,
     members: group.members || {},
   };
 };

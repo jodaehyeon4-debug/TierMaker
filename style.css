@@ -1,3 +1,4 @@
+[hidden]{display:none!important}
 :root{
   --bg:#1a1a17; --bg2:#14140f; --panel:#202019; --raise:#2a2a22; --line:#3a3a31; --text:#f3f3ee; --muted:#b4b4a8; --dim:#8b8b80;
   --accent:#ffc53d; --accent-ink:#1b1708; --danger:#ff7a7a;
@@ -283,3 +284,52 @@ label.inline{display:flex;align-items:center;gap:8px;font-size:15px}
 label.inline select{height:40px;background:#141411;color:var(--text);border:1px solid #4a4a40;border-radius:8px;padding:0 8px;font-size:15px}
 a.btn{text-decoration:none;color:inherit}
 a.btn.primary{color:var(--accent-ink)}
+
+/* ---------- 줄 개수 제한 ---------- */
+.tier-label{flex-direction:column;gap:2px}
+.tier-label .cnt{font-size:12px;font-weight:800;background:rgba(0,0,0,.14);border-radius:8px;padding:0 7px;line-height:18px}
+.tier-label .cnt.full{background:#171714;color:#fff}
+.tier-label .cnt.over{background:#c8443d;color:#fff}
+.tier-row.drop-full{box-shadow:inset 0 0 0 3px #e0524a}
+.tier-row.drop-full .tier-items{background:repeating-linear-gradient(45deg,#2a1918 0 10px,#231514 10px 20px)}
+.im-tiers button{display:inline-flex;align-items:center;gap:4px}
+.im-tiers button small{font-size:11px;font-weight:700;opacity:.75}
+.im-tiers button.full{opacity:.4}
+#imDelete.confirm{background:#c8443d;color:#fff;border-color:#c8443d}
+.max-row{display:flex;align-items:center;gap:6px}
+.max-row input{width:70px!important;text-align:center;font-weight:800;font-size:18px!important}
+.modal.locked .unlock-only{display:none}
+.modal.locked #tierLabelInput{opacity:.7}
+#tierLockNote:empty{display:none}
+/* ---------- 모둠 채팅 ---------- */
+.room-bar .btn.small{height:34px}
+.badge{min-width:18px;height:18px;border-radius:9px;background:#e0524a;color:#fff;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;margin-left:2px}
+.badge[hidden]{display:none}
+#chatPanel{position:fixed;right:calc(clamp(290px,27vw,380px) + 30px);bottom:16px;width:min(330px,calc(100vw - 28px));height:min(380px,calc(100dvh - 110px));z-index:140;
+  background:#202019;border:1px solid #4a4a40;border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden}
+#chatPanel[hidden]{display:none}
+.chat-head{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-bottom:1px solid #33332b}
+.chat-head b{flex:1;font-size:15px}
+.chat-log{flex:1;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;overscroll-behavior:contain}
+.chat-log:empty::after{content:"아직 대화가 없어요. 먼저 인사해 볼까요?";color:var(--dim);font-size:13.5px;margin:auto;text-align:center}
+.msg{max-width:85%;align-self:flex-start;background:#2c2c24;border-radius:12px 12px 12px 4px;padding:6px 10px;font-size:14.5px;line-height:1.4;word-break:break-word}
+.msg .who{display:block;font-size:11.5px;font-weight:800;color:var(--accent);margin-bottom:1px}
+.msg .when{font-size:10.5px;color:var(--dim);margin-left:6px}
+.msg.mine{align-self:flex-end;background:#3a3420;border-radius:12px 12px 4px 12px}
+.msg.mine .who{display:none}
+.msg.notice{align-self:center;max-width:95%;background:#1d2a3a;border:1px solid #33507a;border-radius:10px;color:#d6e6ff}
+.msg.notice .who{color:#8ab8ff}
+.chat-form{display:flex;gap:6px;padding:8px;border-top:1px solid #33332b}
+.chat-form input{flex:1;min-width:0;height:40px;background:#121210;border:1px solid #4a4a40;color:var(--text);border-radius:10px;padding:0 10px;font-size:15px}
+.chat-form input:focus{outline:none;border-color:var(--accent)}
+.chat-note{margin:0;padding:0 12px 8px;font-size:11.5px;color:var(--dim)}
+
+/* ---------- 휴지통 ---------- */
+.trash-btn{position:relative}
+.trash-btn .badge{position:absolute;top:-6px;right:-6px;margin:0}
+.trash-list{display:flex;flex-direction:column;gap:6px;max-height:min(55vh,420px);overflow:auto;margin-top:8px}
+.trash-item{display:flex;align-items:center;gap:10px;background:#1a1a16;border:1px solid #33332b;border-radius:10px;padding:6px 8px}
+.trash-item span{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trash-tile{--tile:48px}
+.trash-tile .item{cursor:default}
+@media (max-width:960px){#chatPanel{right:10px;left:10px;width:auto;bottom:auto;top:110px;height:min(320px,45dvh)}}
