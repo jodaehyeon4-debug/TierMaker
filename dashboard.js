@@ -103,11 +103,12 @@ function summary(boards) {
     const k = b.st.tiers.length; if (!k) continue;
     b.st.tiers.forEach((t, i) => t.items.forEach(id => {
       if (!b.st.items[id] || !b.st.items[id].fixed) return;   // 학생이 새로 만든 항목은 집계하지 않음
-      const a = agg[id] || (agg[id] = { id, it: b.st.items[id], scores: [], labels: [] });
-      a.scores.push(k === 1 ? 1 : 1 - i / (k - 1)); a.labels.push({ l: t.label, c: t.color });
+      const a = agg[id] || (agg[id] = { id, it: b.st.items[id], scores: [], labels: [], levels: [] });
+      a.scores.push(k === 1 ? 1 : 1 - i / (k - 1)); a.labels.push({ l: t.label, c: t.color, g: b.g }); a.levels.push(i + 1);
     }));
   }
   const arr = Object.values(agg).filter(a => a.scores.length);
+  avgTable = buildAvgTable(boards, agg);
   if (!arr.length) return `<div class="summary"><div class="sbox"><h2>반 전체 순위</h2><p>모둠이 항목을 줄에 놓으면 여기에 모여요.</p></div></div>`;
   arr.forEach(a => { const m = a.scores.reduce((s, x) => s + x, 0) / a.scores.length; a.avg = m; a.sd = Math.sqrt(a.scores.reduce((s, x) => s + (x - m) ** 2, 0) / a.scores.length); });
   const top = [...arr].sort((a, b) => b.avg - a.avg || b.scores.length - a.scores.length).slice(0, 10);
@@ -118,7 +119,47 @@ function summary(boards) {
       ${top.map((a, i) => row(a, i, `<div class="bar"><i style="width:${Math.round(a.avg * 100)}%"></i></div>`)).join("")}</div>
     <div class="sbox"><h2>의견이 갈린 항목</h2><p>모둠마다 다른 줄에 놓은 항목이에요. 토론거리로 좋아요.</p>
       ${split.length ? split.map((a, i) => row(a, i, `<div class="dist">${a.labels.map(x => `<i style="background:${esc(x.c)}">${esc(x.l)}</i>`).join("")}</div>`)).join("") : `<p>아직 두 모둠 이상이 놓은 항목이 없어요.</p>`}</div>
-  </div>`;
+  </div>` + avgHtml();
+}
+
+/* 전체 평균 순위: S=1, A=2 … 로 바꿔 모둠 평균을 냄 (선생님이 준 카드만) */
+let avgTable = null;
+function buildAvgTable(boards, agg) {
+  const tiers = boards[0] ? boards[0].st.tiers : [];
+  const all = boards[0] ? Object.entries(boards[0].st.items).filter(([, it]) => it.fixed).map(([id, it]) => ({ id, it })) : [];
+  const rows = all.map(({ id, it }) => {
+    const a = agg[id];
+    const avg = a ? a.levels.reduce((s, x) => s + x, 0) / a.levels.length : null;
+    return { id, it, avg, n: a ? a.levels.length : 0, labels: a ? a.labels : [] };
+  });
+  rows.sort((x, y) => (x.avg == null) - (y.avg == null) || (x.avg ?? 0) - (y.avg ?? 0) || y.n - x.n || nameOf(x.it).localeCompare(nameOf(y.it), "ko"));
+  let rank = 0, prev = null;
+  rows.forEach((r, i) => { if (r.avg == null) { r.rank = null; return; } const key = r.avg.toFixed(2); if (key !== prev) { rank = i + 1; prev = key; } r.rank = rank; });
+  rows.forEach(r => { if (r.avg != null) { const t = tiers[Math.min(tiers.length - 1, Math.max(0, Math.round(r.avg) - 1))]; r.near = t ? { l: t.label, c: t.color } : null; } });
+  return { rows, tiers, groups: boards.length };
+}
+function avgHtml() {
+  if (!avgTable || !avgTable.rows.length) return "";
+  const { rows, tiers, groups } = avgTable;
+  const placed = rows.filter(r => r.avg != null).length;
+  return `<div class="sbox avg-box"><div class="avg-head"><div><h2>전체 평균 순위</h2>
+      <p>${tiers.map((t, i) => `${esc(t.label)}=${i + 1}`).join(", ")}로 바꿔 모둠들의 평균을 냈어요. 숫자가 작을수록 높은 순위예요. · ${placed}/${rows.length}개 항목 집계 · 선생님이 준 카드만</p></div>
+      <button class="btn small" id="avgCsv">엑셀(CSV)로 받기</button></div>
+    <table class="avg-table"><thead><tr><th>순위</th><th></th><th>항목</th><th>평균</th><th>가까운 줄</th><th>모둠별</th><th>놓은 모둠</th></tr></thead><tbody>
+    ${rows.map(r => `<tr class="${r.avg == null ? "none" : ""}"><td class="n">${r.rank ?? "-"}</td><td>${tile(r.it, "th")}</td><td class="nm">${esc(nameOf(r.it))}</td>
+      <td class="avg">${r.avg == null ? "-" : r.avg.toFixed(1)}</td>
+      <td>${r.near ? `<span class="tchip" style="background:${esc(r.near.c)}">${esc(r.near.l)}</span>` : `<span class="dim">아직 안 놓음</span>`}</td>
+      <td><div class="dist">${r.labels.sort((a, b) => a.g - b.g).map(x => `<i style="background:${esc(x.c)}" title="${x.g}모둠">${x.g}:${esc(x.l)}</i>`).join("")}</div></td>
+      <td class="cnt">${r.n} / ${groups}</td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+function downloadAvgCsv() {
+  if (!avgTable) return;
+  const q = s => `"${String(s ?? "").replace(/"/g, '""')}"`;
+  const lines = [["순위", "항목", "평균", "가까운 줄", "놓은 모둠 수", "모둠별"].map(q).join(",")];
+  avgTable.rows.forEach(r => lines.push([r.rank ?? "", nameOf(r.it), r.avg == null ? "" : r.avg.toFixed(2), r.near ? r.near.l : "", r.n, r.labels.map(x => `${x.g}모둠:${x.l}`).join(" ")].map(q).join(",")));
+  const blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `평균순위_${code}.csv`; document.body.appendChild(a); a.click(); a.remove();
 }
 
 dash.addEventListener("input", e => { if (e.target.id === "noticeInput") noticeDraft = e.target.value; });
@@ -131,7 +172,8 @@ dash.addEventListener("submit", async e => {
   try { await TMRoom.notifyGroups(code, up); noticeDraft = ""; $("#noticeInput").value = ""; toast("모든 모둠에 알림을 보냈어요"); } catch (err) { toast(err.message); }
 });
 dash.addEventListener("click", e => {
-  if (e.target.closest(".notice-box")) return;
+  if (e.target.closest("#avgCsv")) { downloadAvgCsv(); return; }
+  if (e.target.closest(".notice-box") || e.target.closest(".summary")) return;
   const c = e.target.closest(".gcard"); if (!c) return;
   const g = +c.dataset.g; focusG = focusG === g ? null : g;
   if (lastData) draw(lastData);
