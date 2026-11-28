@@ -1,0 +1,296 @@
+{
+ "v": 1,
+ "title": "급식 반찬 티어리스트 — 내 최애 반찬은?",
+ "tiers": [
+  {
+   "label": "S",
+   "color": "#ff7f7f",
+   "max": 3,
+   "items": []
+  },
+  {
+   "label": "A",
+   "color": "#ffbf7f",
+   "max": 6,
+   "items": []
+  },
+  {
+   "label": "B",
+   "color": "#ffdf7f",
+   "max": 8,
+   "items": []
+  },
+  {
+   "label": "C",
+   "color": "#ffff7f",
+   "max": 8,
+   "items": []
+  },
+  {
+   "label": "D",
+   "color": "#bfff7f",
+   "max": 7,
+   "items": []
+  }
+ ],
+ "pool": [
+  "b01",
+  "b02",
+  "b03",
+  "b04",
+  "b05",
+  "b06",
+  "b07",
+  "b08",
+  "b09",
+  "b10",
+  "b11",
+  "b12",
+  "b13",
+  "b14",
+  "b15",
+  "b16",
+  "b17",
+  "b18",
+  "b19",
+  "b20",
+  "b21",
+  "b22",
+  "b23",
+  "b24",
+  "b25",
+  "b26",
+  "b27",
+  "b28",
+  "b29",
+  "b30",
+  "b31",
+  "b32"
+ ],
+ "items": {
+  "b01": {
+   "type": "img",
+   "src": "templates/BANCHAN/01.webp",
+   "cap": "",
+   "title": "제육볶음",
+   "desc": "고추장 양념에 매콤하게 볶은 돼지고기 (메인 반찬)"
+  },
+  "b02": {
+   "type": "img",
+   "src": "templates/BANCHAN/02.webp",
+   "cap": "",
+   "title": "불고기",
+   "desc": "달콤한 간장 양념에 재운 소고기 볶음 (메인 반찬)"
+  },
+  "b03": {
+   "type": "img",
+   "src": "templates/BANCHAN/03.webp",
+   "cap": "",
+   "title": "돈가스",
+   "desc": "바삭하게 튀긴 돼지고기에 소스를 뿌린 것 (메인 반찬)"
+  },
+  "b04": {
+   "type": "img",
+   "src": "templates/BANCHAN/04.webp",
+   "cap": "",
+   "title": "닭강정",
+   "desc": "튀긴 닭고기에 달콤매콤한 양념을 버무린 것 (메인 반찬)"
+  },
+  "b05": {
+   "type": "img",
+   "src": "templates/BANCHAN/05.webp",
+   "cap": "",
+   "title": "탕수육",
+   "desc": "튀긴 고기에 새콤달콤한 소스를 곁들인 것 (메인 반찬)"
+  },
+  "b06": {
+   "type": "img",
+   "src": "templates/BANCHAN/06.webp",
+   "cap": "",
+   "title": "떡갈비",
+   "desc": "다진 고기를 납작하게 빚어 구운 것 (메인 반찬)"
+  },
+  "b07": {
+   "type": "img",
+   "src": "templates/BANCHAN/07.webp",
+   "cap": "",
+   "title": "함박스테이크",
+   "desc": "다진 고기 스테이크에 소스를 올린 것 (메인 반찬)"
+  },
+  "b08": {
+   "type": "img",
+   "src": "templates/BANCHAN/08.webp",
+   "cap": "",
+   "title": "생선까스",
+   "desc": "생선 살을 튀겨 타르타르소스를 곁들인 것 (메인 반찬)"
+  },
+  "b09": {
+   "type": "img",
+   "src": "templates/BANCHAN/09.webp",
+   "cap": "",
+   "title": "고등어구이",
+   "desc": "노릇하게 구운 고등어 (메인 반찬)"
+  },
+  "b10": {
+   "type": "img",
+   "src": "templates/BANCHAN/10.webp",
+   "cap": "",
+   "title": "오징어볶음",
+   "desc": "오징어와 채소를 매콤하게 볶은 것 (메인 반찬)"
+  },
+  "b11": {
+   "type": "img",
+   "src": "templates/BANCHAN/11.webp",
+   "cap": "",
+   "title": "소시지야채볶음",
+   "desc": "문어 모양 소시지와 채소를 케첩 소스로 볶은 것 (메인 반찬)"
+  },
+  "b12": {
+   "type": "img",
+   "src": "templates/BANCHAN/12.webp",
+   "cap": "",
+   "title": "동그랑땡",
+   "desc": "다진 고기와 두부를 동그랗게 부친 전 (메인 반찬)"
+  },
+  "b13": {
+   "type": "img",
+   "src": "templates/BANCHAN/13.webp",
+   "cap": "",
+   "title": "계란말이",
+   "desc": "달걀을 얇게 부쳐 돌돌 만 것 (메인 반찬)"
+  },
+  "b14": {
+   "type": "img",
+   "src": "templates/BANCHAN/14.webp",
+   "cap": "",
+   "title": "떡볶이",
+   "desc": "가래떡을 고추장 양념에 졸인 것 (메인 반찬)"
+  },
+  "b15": {
+   "type": "img",
+   "src": "templates/BANCHAN/15.webp",
+   "cap": "",
+   "title": "김말이튀김",
+   "desc": "김에 당면을 말아 튀긴 것 (메인 반찬)"
+  },
+  "b16": {
+   "type": "img",
+   "src": "templates/BANCHAN/16.webp",
+   "cap": "",
+   "title": "잡채",
+   "desc": "당면과 채소·고기를 간장 양념에 볶은 것 (메인 반찬)"
+  },
+  "b17": {
+   "type": "img",
+   "src": "templates/BANCHAN/17.webp",
+   "cap": "",
+   "title": "배추김치",
+   "desc": "배추를 양념에 버무려 익힌 우리 대표 반찬 (밑반찬)"
+  },
+  "b18": {
+   "type": "img",
+   "src": "templates/BANCHAN/18.webp",
+   "cap": "",
+   "title": "깍두기",
+   "desc": "무를 네모나게 썰어 버무린 김치 (밑반찬)"
+  },
+  "b19": {
+   "type": "img",
+   "src": "templates/BANCHAN/19.webp",
+   "cap": "",
+   "title": "어묵볶음",
+   "desc": "어묵과 양파를 간장 양념에 볶은 것 (밑반찬)"
+  },
+  "b20": {
+   "type": "img",
+   "src": "templates/BANCHAN/20.webp",
+   "cap": "",
+   "title": "멸치볶음",
+   "desc": "잔멸치와 견과류를 달콤짭짤하게 볶은 것 (밑반찬)"
+  },
+  "b21": {
+   "type": "img",
+   "src": "templates/BANCHAN/21.webp",
+   "cap": "",
+   "title": "감자조림",
+   "desc": "감자를 간장 양념에 조린 것 (밑반찬)"
+  },
+  "b22": {
+   "type": "img",
+   "src": "templates/BANCHAN/22.webp",
+   "cap": "",
+   "title": "메추리알장조림",
+   "desc": "메추리알을 간장에 조린 것 (밑반찬)"
+  },
+  "b23": {
+   "type": "img",
+   "src": "templates/BANCHAN/23.webp",
+   "cap": "",
+   "title": "두부조림",
+   "desc": "두부를 부쳐 양념장에 조린 것 (밑반찬)"
+  },
+  "b24": {
+   "type": "img",
+   "src": "templates/BANCHAN/24.webp",
+   "cap": "",
+   "title": "시금치나물",
+   "desc": "데친 시금치를 참기름에 무친 것 (밑반찬)"
+  },
+  "b25": {
+   "type": "img",
+   "src": "templates/BANCHAN/25.webp",
+   "cap": "",
+   "title": "콩나물무침",
+   "desc": "데친 콩나물을 고소하게 무친 것 (밑반찬)"
+  },
+  "b26": {
+   "type": "img",
+   "src": "templates/BANCHAN/26.webp",
+   "cap": "",
+   "title": "미역줄기볶음",
+   "desc": "미역 줄기를 기름에 볶은 것 (밑반찬)"
+  },
+  "b27": {
+   "type": "img",
+   "src": "templates/BANCHAN/27.webp",
+   "cap": "",
+   "title": "진미채볶음",
+   "desc": "오징어채를 고추장 양념에 볶은 것 (밑반찬)"
+  },
+  "b28": {
+   "type": "img",
+   "src": "templates/BANCHAN/28.webp",
+   "cap": "",
+   "title": "연근조림",
+   "desc": "연근을 달콤한 간장에 조린 것 (밑반찬)"
+  },
+  "b29": {
+   "type": "img",
+   "src": "templates/BANCHAN/29.webp",
+   "cap": "",
+   "title": "브로콜리·초장",
+   "desc": "데친 브로콜리와 초고추장 (밑반찬)"
+  },
+  "b30": {
+   "type": "img",
+   "src": "templates/BANCHAN/30.webp",
+   "cap": "",
+   "title": "오이무침",
+   "desc": "오이를 새콤달콤 매콤하게 무친 것 (밑반찬)"
+  },
+  "b31": {
+   "type": "img",
+   "src": "templates/BANCHAN/31.webp",
+   "cap": "",
+   "title": "조미김",
+   "desc": "기름 바르고 소금 친 김 (밑반찬)"
+  },
+  "b32": {
+   "type": "img",
+   "src": "templates/BANCHAN/32.webp",
+   "cap": "",
+   "title": "버섯볶음",
+   "desc": "여러 가지 버섯과 채소를 볶은 것 (밑반찬)"
+  }
+ }
+}
