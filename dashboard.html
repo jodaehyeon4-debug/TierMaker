@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>모둠 모아 보기 · 우리반 티어메이커</title>
+<title>교사용 모둠 활동 · 우리반 티어메이커</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="style.css?v=20261126c">
+<link rel="stylesheet" href="style.css?v=20261128a">
 <style>
   body{display:block;height:auto;overflow:auto}
   .dash{padding:16px 18px 40px;max-width:1800px;margin:0 auto}
@@ -58,6 +58,23 @@
   .notice-box input{flex:1;height:40px;background:#141411;border:1px solid #4a4a40;color:var(--text);border-radius:10px;padding:0 12px;font-size:15px}
   .mini .tier-label{flex-direction:column;gap:1px}
   .mini .tier-label .cnt{font-size:10px;line-height:14px;padding:0 4px}
+  .start-wrap{max-width:720px;margin:40px auto;background:var(--panel);border:1px solid #33332b;border-radius:16px;padding:26px 28px}
+  .start-wrap h1{margin:0 0 6px;font-size:26px}
+  .start-wrap h2{font-size:16px;margin:22px 0 8px}
+  .start-wrap .sub{color:var(--muted);margin:0 0 18px;line-height:1.6}
+  .start-form{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+  .start-form label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);font-weight:700}
+  .start-form input,.start-form select{height:48px;background:#141411;border:1px solid #4a4a40;color:var(--text);border-radius:10px;padding:0 12px;font-size:20px;font-weight:800}
+  .start-form input{width:260px;text-transform:uppercase;letter-spacing:2px}
+  .start-form .btn{height:48px}
+  .err{color:#ff8a8a;font-weight:700;min-height:1em}
+  .sets{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13.5px;color:var(--muted)}
+  .chip{height:36px;border-radius:18px;border:1px solid #4a4a40;background:#1a1a16;color:var(--text);padding:0 14px;font-weight:700}
+  .chip:hover{border-color:var(--accent)}
+  .recent{display:flex;flex-direction:column;gap:6px}
+  .recent .btn{justify-content:flex-start;gap:10px}
+  .recent b{color:var(--accent);letter-spacing:2px}
+  .hint{color:var(--dim);font-size:13px;margin-top:20px}
   .dmsg{padding:60px 20px;text-align:center;color:var(--muted);font-size:16px}
   .tools{display:flex;gap:8px}
   @media (max-width:900px){.summary{grid-template-columns:1fr}.groups{grid-template-columns:1fr}}
@@ -65,7 +82,7 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>모둠 <b>모아 보기</b></div>
+  <div class="brand"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>교사용 <b>모둠 활동</b></div>
   <div class="spacer"></div>
   <div class="tools">
     <a class="btn" href="./" target="_blank" rel="noopener">티어메이커 열기</a>
@@ -75,8 +92,8 @@
 <main class="dash" id="dash"><div class="dmsg">불러오는 중…</div></main>
 <div class="backdrop" id="backdrop"></div>
 <div id="toast" role="status"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
-<script src="config.js?v=20261126c"></script>
-<script src="room.js?v=20261126c"></script>
-<script src="dashboard.js?v=20261126c"></script>
+<script src="config.js?v=20261128a"></script>
+<script src="room.js?v=20261128a"></script>
+<script src="dashboard.js?v=20261128a"></script>
 </body>
 </html>

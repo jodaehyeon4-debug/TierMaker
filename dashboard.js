@@ -15,7 +15,44 @@ function tile(it, cls = "item") {
   return `<div class="${cls}" title="${esc(nameOf(it))}" style="background:${esc(it.bg || "#fff")}"><div class="txt">${esc(it.text)}</div></div>`;
 }
 
-if (!code) { dash.innerHTML = `<div class="dmsg">주소 끝에 <b>?code=모둠활동코드</b> 가 필요해요.<br>티어메이커 → 교사용 → 모둠 활동 열기에서 '모둠 모아 보기 열기'를 눌러 들어오세요.</div>`; return; }
+if (!code) { startPage(); return; }
+
+/* 코드 없이 들어오면: 수업 세트로 모둠 활동 바로 열기 */
+function startPage() {
+  const recent = (() => { try { return JSON.parse(localStorage.getItem("tm.v1.myrooms") || "[]"); } catch { return []; } })();
+  dash.innerHTML = `<div class="start-wrap">
+    <h1>모둠 활동 시작하기</h1>
+    <p class="sub">수업 세트 코드와 모둠 수를 고르면 학생용 코드가 나오고, 이 화면에 모든 모둠이 실시간으로 보여요.</p>
+    <form id="startForm" class="start-form">
+      <label>수업 세트 코드<input id="setCode" placeholder="예: BANCHAN, SEJONG" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+      <label>모둠 수<select id="setGroups">${[2,3,4,5,6,7,8].map(n => `<option${n === 6 ? " selected" : ""}>${n}</option>`).join("")}</select></label>
+      <button class="btn primary" id="startGo">모둠 활동 열기</button>
+    </form>
+    <p class="err" id="startErr"></p>
+    <div class="sets"><span>만들어 둔 수업 세트:</span>
+      <button class="chip" data-set="BANCHAN">BANCHAN · 급식 반찬</button>
+      <button class="chip" data-set="SEJONG">SEJONG · 세종대왕의 업적</button></div>
+    ${recent.length ? `<h2>최근에 연 모둠 활동</h2><div class="recent">${recent.slice(0, 8).map(r => `<a class="btn" href="?code=${esc(r.code)}"><b>${esc(r.code)}</b> ${esc(r.title)} · ${r.groups}모둠</a>`).join("")}</div>` : ""}
+    <p class="hint">직접 만든 티어표로 열려면: 티어메이커 앱 → ⋯ → 교사용 → 모둠 활동 열기</p>
+  </div>`;
+  dash.addEventListener("click", e => { const c = e.target.closest(".chip"); if (c) { $("#setCode").value = c.dataset.set; $("#setCode").focus(); } });
+  $("#startForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const set = $("#setCode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""), groups = +$("#setGroups").value, err = $("#startErr"), btn = $("#startGo");
+    if (!set) { err.textContent = "수업 세트 코드를 넣어 주세요."; return; }
+    if (!TMRoom.available()) { err.textContent = "Firebase 설정이 없어요."; return; }
+    btn.disabled = true; btn.textContent = "여는 중…"; err.textContent = "";
+    try {
+      const r = await fetch(`templates/${set}.json`, { cache: "no-cache" });
+      if (!r.ok) throw new Error(`'${set}' 수업 세트를 찾지 못했어요. 코드를 확인해 주세요.`);
+      const tpl = await r.json();
+      const newCode = await TMRoom.createSession({ title: tpl.title, groups, tpl, locked: (tpl.tiers || []).some(t => t.max > 0) });
+      const rows = recent.slice(); rows.unshift({ code: newCode, title: tpl.title, groups, created: Date.now() });
+      try { localStorage.setItem("tm.v1.myrooms", JSON.stringify(rows.slice(0, 30))); } catch {}
+      location.href = "?code=" + newCode;
+    } catch (ex) { err.textContent = ex.message; btn.disabled = false; btn.textContent = "모둠 활동 열기"; }
+  });
+}
 if (!TMRoom.available()) { dash.innerHTML = `<div class="dmsg">Firebase 설정이 아직 없어요. config.js를 확인해 주세요.</div>`; return; }
 
 TMRoom.watch(code, data => {
