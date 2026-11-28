@@ -102,6 +102,7 @@ function summary(boards) {
   for (const b of boards) {
     const k = b.st.tiers.length; if (!k) continue;
     b.st.tiers.forEach((t, i) => t.items.forEach(id => {
+      if (!b.st.items[id] || !b.st.items[id].fixed) return;   // 학생이 새로 만든 항목은 집계하지 않음
       const a = agg[id] || (agg[id] = { id, it: b.st.items[id], scores: [], labels: [] });
       a.scores.push(k === 1 ? 1 : 1 - i / (k - 1)); a.labels.push({ l: t.label, c: t.color });
     }));
@@ -111,9 +112,9 @@ function summary(boards) {
   arr.forEach(a => { const m = a.scores.reduce((s, x) => s + x, 0) / a.scores.length; a.avg = m; a.sd = Math.sqrt(a.scores.reduce((s, x) => s + (x - m) ** 2, 0) / a.scores.length); });
   const top = [...arr].sort((a, b) => b.avg - a.avg || b.scores.length - a.scores.length).slice(0, 10);
   const split = arr.filter(a => a.scores.length >= 2).sort((a, b) => b.sd - a.sd).slice(0, 6);
-  const row = (a, i, extra) => `<div class="rank"><span class="n">${i + 1}</span>${tile(a.it, "th")}<span>${esc(nameOf(a.it))} <small style="color:var(--muted)">(${a.scores.length}모둠)</small></span>${extra}</div>`;
+  const row = (a, i, extra) => `<div class="rank"><span class="n">${i + 1}</span>${tile(a.it, "th")}<span>${esc(nameOf(a.it))} <small style="color:var(--muted)">(${a.scores.length}개 모둠)</small></span>${extra}</div>`;
   return `<div class="summary">
-    <div class="sbox"><h2>반 전체 순위 TOP 10</h2><p>모둠들이 높은 줄에 놓을수록 위로 올라가요.</p>
+    <div class="sbox"><h2>반 전체 순위 TOP 10</h2><p>모둠들이 높은 줄에 놓을수록 위로 올라가요. (선생님이 준 항목만 집계)</p>
       ${top.map((a, i) => row(a, i, `<div class="bar"><i style="width:${Math.round(a.avg * 100)}%"></i></div>`)).join("")}</div>
     <div class="sbox"><h2>의견이 갈린 항목</h2><p>모둠마다 다른 줄에 놓은 항목이에요. 토론거리로 좋아요.</p>
       ${split.length ? split.map((a, i) => row(a, i, `<div class="dist">${a.labels.map(x => `<i style="background:${esc(x.c)}">${esc(x.l)}</i>`).join("")}</div>`)).join("") : `<p>아직 두 모둠 이상이 놓은 항목이 없어요.</p>`}</div>
